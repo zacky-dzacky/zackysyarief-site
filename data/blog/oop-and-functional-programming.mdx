@@ -1,0 +1,200 @@
+---
+title: Functional or Object Oriented Programming. Kotlin has both of those beauties
+date: '2025-08-11'
+tags: ['kotlin', 'android']
+draft: false
+summary: 'Object-oriented programming is a very popular paradigm, especially for Java users. This paradigm uses an imperative approach, which means it relies on a specific structure that must be followed by developers.'
+---
+
+Object-oriented programming is a very popular paradigm, especially for Java users. This paradigm uses an imperative approach, which means it relies on a specific structure that must be followed by developers.
+
+Imperative programming requires developers to follow a strict set of rules. For example, in Java, the rule is that a function must be within a class. To call that function, you must first create an instance of the class before the function can be used.
+
+```
+class Playground {
+  public static void main(String[] args) {
+    Animal animal = new Animal();
+    System.out.println("Animal roaring: "+ animal.roar())
+  }
+}
+class Animal {
+  public String roar() {
+    return "Arrgh";
+  }
+
+  public String meow() {
+    return "Meow";
+  }
+}
+
+```
+
+As you can see from the code above, to call the `canRoar()` function, you need to create an instance of `Animal`. This means that if the `Animal` class has 20 functions, when you create an Animal instance, you will have all of those functions available, even if you only need to use `canRoar()`. This is a core characteristic of the imperative nature of object-oriented programming, where all rules must be followed.
+
+By following this paradigm, we gain several advantages, including:
+
+- The imperative nature of object-oriented programming makes every behavior predictable and standardized
+- Each class (state) is defined by its internal attributes
+- This creates order, making it easier to build a framework.
+
+However, object-oriented programming also has several disadvantages besides verbosity, including:
+
+- Providing access to the same resource to multiple objects can sometimes provide unspecified output to users.
+- More processing power can be consumed than required.
+- Writing OOP code for beginners can be complicated and time-consuming.
+- Longer statements are required to execute a single operation.
+
+After we know all those pros and cons about object-oriented programming. know lets digging what is functional programming is.
+
+# Functional Programming
+
+> Functional code can be more elegant and succinct when compared to its imperative counterpart: instead of mutating variables and relying on loops and conditional branching, working with functions as values gives you much more power of abstraction. (Kotlin in Action, Second Edition)
+
+The history of functional programming began with Alonzo Church, a mathematical logician who developed the concept of Lambda calculus. The first programming language to use this concept was Lisp. Functional programming was later adopted by other languages such as Haskell and Meta Language (ML). More recently, in 2015, with the release of ECMAScript 6 (ES6), JavaScript was updated to include features that greatly enhanced its functional programming capabilities.
+
+The main difference between functional and object-oriented programming is that functions are treated as first-class citizens. This is very different from object-oriented programming, where a function is always a part of a class.
+
+With the concept of functions as first-class citizens, a new and very different paradigm is changed. In this paradigm, a function becomes an expression.
+
+If the code above were written with the functional paradigm, we could do it in a few ways, such as:
+
+```
+fun main() {
+  println("Animal roaring: ${roar()}");
+}
+
+fun roar(): String {
+  return "Arrgh";
+}
+```
+
+Alternatively, the function can be initialized directly into a variable using an anonymous function.
+
+```
+fun main() {
+  val animal = fun(): String {
+    return "Arrgh"
+  }
+
+  println("Animal roaring: ${animal()}")
+}
+```
+
+Furthermore, with the concept of functional programming, a function can be a parameter, initialized into a variable, an argument in another function, and even the return value of a function. The main keys to understanding functional programming in Kotlin can be categorized into several points, including:
+
+- First-class functions — You work with functions (pieces of behavior) as values. You can store them in variables, pass them as parameters, or return them from other functions.
+- Immutability — You work with immutable objects, which guarantees their state can’t change after their creation.
+- No side effects — You write pure functions, functions that return the same result given the same inputs and don’t modify the state of other objects or interact with the outside world.
+
+## Combining both Functional & Object Oriented Programming
+
+What’s great about Kotlin is that we can combine a modern functional programming style with the imperative nature of object-oriented programming. When we develop large applications, we need a clear structure that is easy to understand. We can still find standard OOP concepts such as classes, objects, inheritance, encapsulation, and polymorphism.
+
+### inheritance
+
+```
+open class Parent {
+    // Superclass members
+}
+
+class Child : Parent() {
+    // Subclass members
+}
+```
+
+### encapsulation
+
+```
+class Example {
+    private var privateVar: Int = 0
+    protected var protectedVar: Int = 0
+    internal var internalVar: Int = 0
+    var publicVar: Int = 0
+}
+```
+
+### Polymorphism overriding
+
+```
+    // Base class
+open class Animal {
+    // Method to make sound
+    open fun makeSound() {
+        println("Animal makes a sound")
+    }
+}
+
+// Subclass Dog inheriting from Animal
+class Dog : Animal() {
+    // Override makeSound method
+    override fun makeSound() {
+        println("Dog barks")
+    }
+}
+
+// Subclass Cat inheriting from Animal
+class Cat : Animal() {
+    // Override makeSound method
+    override fun makeSound() {
+        println("Cat meows")
+    }
+}
+
+fun main() {
+    val dog = Dog()
+    val cat = Cat()
+
+    // Polymorphism: Same method name, different behavior based on the object type
+    val animals = arrayOf(dog, cat)
+    for (animal in animals) {
+        animal.makeSound() // Output depends on the actual type of the object
+    }
+}
+```
+
+### Polimorphism overloading
+
+```
+class Calculator {
+    // Method to add two integers
+    fun add(a: Int, b: Int): Int {
+        return a + b
+    }
+
+    // Method to add three integers
+    fun add(a: Int, b: Int, c: Int): Int {
+        return a + b + c
+    }
+
+    // Method to add two doubles
+    fun add(a: Double, b: Double): Double {
+        return a + b
+    }
+}
+
+fun main() {
+    val calculator = Calculator()
+
+    // Using the add method with two integers
+    val sum1 = calculator.add(5, 3)
+    println("Sum of 5 and 3 is $sum1")
+
+    // Using the add method with three integers
+    val sum2 = calculator.add(5, 3, 2)
+    println("Sum of 5, 3, and 2 is $sum2")
+
+    // Using the add method with two doubles
+    val sum3 = calculator.add(2.5, 3.7)
+    println("Sum of 2.5 and 3.7 is $sum3")
+}
+```
+
+# Conclusion
+
+The above are just a few simple examples of how to use object-oriented and functional programming. Each of these paradigms has its own advantages and disadvantages. It’s important for us as Kotlin users to wisely decide when to use one over the other. I personally use both in my Kotlin projects.
+
+In my case, When I want to create a standardized framework that can be shared with other developers, I’ll create a Base Class that can be overridden by child classes — a core concept of OOP. However, when I want to create a specific and isolated function, I use the functional programming paradigm.
+
+Once again, there is no right or wrong paradigm in programming. There is only the one that is most suitable for the task at hand.
+
+Happy Coding ~~
