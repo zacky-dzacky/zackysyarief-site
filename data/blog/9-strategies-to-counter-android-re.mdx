@@ -1,0 +1,184 @@
+---
+title: 9 Strategies to Counter Android Reverse Engineering
+date: '2025-08-15'
+tags: ['security', 'android']
+draft: false
+summary: 'When we create an android app, the process is to write code, compile it, and build it into a single application with an .apk or .aab format. Reverse engineering is a security technique where an attacker tries to reverse this process, starting by extracting the .apk,...'
+---
+
+> Your Essential Guide to Hardening Your Application Against Attackers
+
+When we create an android app, the process is to write code, compile it, and build it into a single application with an .apk or .aab format. Reverse engineering is a security technique where an attacker tries to reverse this process, starting by extracting the .apk, decompiling each .class file, and then tracing every line of code.
+
+Once an attacker understands what the lines of code we wrote do, they can manipulate that code and rebuild the APK with the newly modified source code.
+
+For example, let’s say our source code includes a root detection validation to prevent the application from running on rooted devices. With this technique, an attacker has the capability to bypass this validation. As a result, the modified application can run normally on a rooted device. That’s very dangerous, isn’t it?
+
+Reverse engineering is very difficult to prevent because attackers have unlimited time to analyze an application’s source code. Therefore, it’s crucial for us to ensure that, at a minimum, attackers cannot easily view the source code or run the manipulated code.
+
+Here are the techniques that you must apply to your Android application to prevent reverse engineering.
+
+Disclaimer: Implementing these techniques cannot guarantee that an Android app will be 100% safe from reverse engineering attacks. There will always be new vulnerabilities that need to be consistently addressed.
+
+# File Integrity Check [1]
+
+File integrity is used to check if there have been any changes to a file. Typically, there are two parts whose integrity needs to be validated:
+
+## Source Code integrity
+
+Source code integrity is the practice of checking file integrity at the source code level. If an attacker makes a change, for example by removing the root detection validation as we discussed earlier, then when the manipulated source code is rebuilt, the changes will be detected and flagged by the file integrity validation.
+
+## Data Integrity
+
+Data integrity is used to check for any changes to our data, whether it’s in local storage (like shared preferences) or in tables (like SQLite).
+
+# Emulator Check [2]
+
+Emulators are often used by Android developers during the development phase, offering many helpful features like fake locations and database inspection. However, these same conveniences can also be exploited by attackers to analyze your app’s source code. Because of this, it’s crucial to ensure you add emulator detection validation to your app once it’s live in production.
+
+# Root Detection [3]
+
+Most reverse engineering tools require root-level access. Because of this, it’s important to restrict root access on the device to at least hinder the reverse engineering process. Root is a term commonly used in Linux-based systems, where it means a user has full access to the system. By default, a user has limited access to a device.
+
+Here are a few ways to detect root access:
+
+## Checking for Root Files
+
+Typically, files that indicate a superuser is active can be found in the following directories:
+
+```
+  /system/app/Superuser.apk
+  /system/etc/init.d/99SuperSUDaemon
+  /dev/com.koushikdutta.superuser.daemon/
+  /system/xbin/daemonsu
+
+  /sbin/su
+  /system/bin/su
+  /system/bin/failsafe/su
+  /system/xbin/su
+  /system/xbin/busybox
+  /system/sd/xbin/su
+  /data/local/su
+  /data/local/xbin/su
+  /data/local/bin/su
+```
+
+To detect these files, you can use the code below.
+
+```
+public static boolean checkRoot(){
+  for(String pathDir : System.getenv("PATH").split(":")){
+      if(new File(pathDir, "su").exists()) {
+          return true;
+      }
+  }
+  return false;
+}
+```
+
+## Executing Privileged Commands
+
+You can also try to run the su command. If the device doesn't have root access, you will get an access error.
+And many more, you can check detail <a href='https://mas.owasp.org/MASTG/knowledge/android/MASVS-RESILIENCE/MASTG-KNOW-0027/'>here</a>
+
+# Google Play Integrity [4]
+
+Same as file and storage integrity, we also need to ensure that the app on a device is the official version downloaded from Google Play. This is where Google Play Integrity comes in.
+
+Google Play Integrity uses verdicts to evaluate a device’s environment. The process is as follows: the app generates a token and attaches it to an API call. Your backend then validates this token with the Play Integrity service. The service returns a verdict score, which you can use to determine whether a transaction should be allowed to proceed.
+
+You can find more details about Google Play Integrity <a href='https://developer.android.com/google/play/integrity'>here</a>
+
+# Device Binding [5]
+
+Device binding is a technique used to ensure that the device a user is on is legitimate. This is done by giving the server a unique identifier for the device during the first authentication — let’s call it Device A.
+
+Even if another device (Device B) is used, its access rights and privilege level must be lower than Device A’s. The purpose of this is to prevent account takeovers or an attacker from duplicating the state of Device A.
+
+# Anti Debugging [6]
+
+A debugger is a tool we often use to inspect data and the flow of a process. We can use it at the code level or to examine data at runtime. However, an active debug mode in a production application is very dangerous, so it’s crucial to ensure that a debugger cannot be run once the app is in production.
+
+# Obfuscation [7]
+
+Obfuscation is a technique used to disguise code to make it difficult to read. This ensures that when an application is decompiled, the source code is much harder to understand. Android has used Proguard as an obfuscation tool since Android 14, and Google later released a more updated tool called R8 to replace Proguard.
+
+# Detection for reverse engineering tools [8]
+
+Reverse engineers commonly use tools like Frida, XPosed, or ElleKit. These tools typically only run on rooted devices.
+
+One way we can detect these tools is by checking if Frida is running on the device, such as the `frida-server`. Frida works by injecting an agent called `frida-agent` into an application's memory. We can detect this by checking the `/proc/<pid>/maps` file. If the agent is present, you will find `frida-agent-64.so`, as shown in the image below:
+
+```
+bullhead:/ # cat /proc/18370/maps | grep -i frida
+71b6bd6000-71b7d62000 r-xp  /data/local/tmp/re.frida.server/frida-agent-64.so
+71b7d7f000-71b7e06000 r--p  /data/local/tmp/re.frida.server/frida-agent-64.so
+71b7e06000-71b7e28000 rw-p  /data/local/tmp/re.frida.server/frida-agent-64.so
+```
+
+# Runtime integrity integration [9]
+
+In this process, we’ll check the integrity of the application’s memory. This is to ensure that no memory changes occur while the app is running. We can check this using two methods:
+
+## Deteksi dengan java runtime
+
+Tools like XPosed are typically injected during Android runtime. We can use a library like XPosedDetector to check for this. Below is an example of the source code for detecting injection during Android runtime.
+
+```
+static jclass findXposedBridge(C_JNIEnv *env, jobject classLoader) {
+    return findLoadedClass(env, classLoader, "de/robv/android/xposed/XposedBridge"_iobfs.c_str());
+}
+void doAntiXposed(C_JNIEnv *env, jobject object, intptr_t hash) {
+    if (!add(hash)) {
+        debug(env, "checked classLoader %s", object);
+        return;
+    }
+#ifdef DEBUG
+    LOGI("doAntiXposed, classLoader: %p, hash: %zx", object, hash);
+#endif
+    jclass classXposedBridge = findXposedBridge(env, object);
+    if (classXposedBridge == nullptr) {
+        return;
+    }
+    if (xposed_status == NO_XPOSED) {
+        xposed_status = FOUND_XPOSED;
+    }
+    disableXposedBridge(env, classXposedBridge);
+    if (clearHooks(env, object)) {
+#ifdef DEBUG
+        LOGI("hooks cleared");
+#endif
+        if (xposed_status < ANTIED_XPOSED) {
+            xposed_status = ANTIED_XPOSED;
+        }
+    }
+}
+```
+
+## Detecting Native Hook
+
+Attackers typically use ELF to install native function hooks that can overwrite function pointers in memory. Therefore, we also need to check the memory integrity to counter this.
+You can find more details on this topic <a href='https://nickmingi.github.io/minglab/computer/reverseengineering/Reverse-Engineering-ELF.html'>here.</a>
+
+# Conclusion
+
+Attackers are always finding vulnerabilities in applications. Reverse engineering is one of the most difficult methods to prevent because it gives an attacker full access to the app, from viewing the source code to manipulating storage and even memory.
+
+Because of this, it’s crucial to remember that the moment you publish your app to Google Play, it can be dissected and analyzed. Making your application at least more difficult to understand and manipulate is a mandatory step that every Android developer must take.
+
+Happy Coding ~~
+
+## References
+
+- <a target="_blank" href="https://owasp.org">
+    OWASP
+  </a>
+- <a target="_blank" href="https://developer.android.com/google/play/integrity">
+    Google Play Integrity
+  </a>
+- <a
+    target="_blank"
+    href="https://nickmingi.github.io/minglab/computer/reverseengineering/Reverse-Engineering-ELF.html"
+  >
+    Ming Lab
+  </a>
