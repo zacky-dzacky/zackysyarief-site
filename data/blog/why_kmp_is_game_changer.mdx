@@ -1,0 +1,66 @@
+---
+title: 'Why Kotlin Multiplatform (KMP) is a Game-Changer'
+date: '2025-07-28'
+lastmod: '2023-08-05'
+tags: ['kotlin-multiplatform', 'android', 'kotlin']
+draft: false
+summary: 'For a long time, our only alternatives to speed up the mobile development process have been cross-platform solutions like React Native, Flutter, and Lynx. As native developers, it can sometimes be frustrating to explain why native code is important.'
+images: ['/static/images/twitter-card.png']
+---
+
+For a long time, our only alternatives to speed up the mobile development process have been cross-platform solutions like React Native, Flutter, and Lynx. As native developers, it can sometimes be frustrating to explain why native code is important.
+
+When comparing development using React Native and similar frameworks with native development, native developers (Android, iOS) often get frustrated trying to explain why we should stick with native languages. The most common argument thrown back at us is that using cross-platform solutions is highly efficient in terms of development time and cost.
+
+Let’s assume we’re in a squad, ideally consisting of FE, BE, and QA. Let’s also assume the required squad velocity is 16 per sprint, with one developer capable of completing a maximum of 8 story points. In a mobile native development format, we would need:
+
+- 2 Android developers
+- 2 iOS developers
+- 2 Backend Developers
+- 2 QA
+
+In total, we would need 8 people involved in this development, which, of course, correlates significantly with budget and effort.
+
+Now, compare this with a cross-platform development format, where Front-End (FE) can be merged into one, making the team structure:
+
+- 2 FE Developers
+- 2 BE Developers
+- 2 QA
+
+With this format, we can save on cost and effort. This kind of argument is very difficult to counter when challenged by the product team, whose KPI is time to market, meaning features need to be released as soon as possible.
+
+However, all mobile developers know that native cannot be truly compared to cross-platform technology. The main reason is that we have full control over each OS. This is certainly not the same as cross-platform, where we are heavily dependent on libraries and the compatibility issues of those libraries with each respective OS.
+
+## Introducing Kotlin Multiplatform (KMP)
+
+This is precisely what the JetBrains team is trying to develop: an effort to allow native code to be shared across other platforms. This gives us the “sense” of cross-platform development. This technology can purely use Kotlin, where, when we want to use it on other platforms like iOS or Web, Kotlin will be converted into the native language of each platform. This technology is more widely known as Kotlin Multiplatform (KMP).
+
+In this article, I won’t dive too deeply into how to use Kotlin Multiplatform. Instead, this article focuses more on explaining how KMP can be leveraged. I will explain a case study that I’ve used on both Android and iOS native mobile applications.
+
+## KMP in Practice: The Data Layer
+
+Fundamentally, this multiplatform technology can cover all aspects of native applications, from the UI and Presentation to the Data layer. For the UI layer, the technology that can be used is Jetpack Compose (which will be explained in another article). However, to get a preliminary feel for multiplatform, we’ll try implementing it only at the data layer. The data layer here functions to standardize the data needed between both platforms.
+
+For example, we will make an API call to `getUser()` to the backend, where the returned result will be saved to local storage and, at the same time, returned to the presentation layer to be displayed in the UI.
+
+[gambar]
+
+In the diagram above, we can see that Android and iOS each have their own presentation layers. Each of these platforms only needs to access one source. The question is, how can KMP know which libraries to use for remote API calls or local storage on each platform? As we know, for Android, we typically use OkHttp for remote calls and Shared Preferences for local storage. For iOS, the library used is Darwin, which utilizes `NSURLSession` as its core. For iOS local storage itself, `NSUserDefaults` will still be used.
+
+Some cross-platform developers might feel that this is the same as the libraries they use. However, the differentiating factor is that all of this can be customized according to the developer’s wishes.
+
+By standardizing the data layer, the respective presentation layers in Android and iOS will only need to pass through the return from this Data layer to the UI. With this, we can gain the advantages present in cross-platform development, such as:
+
+- Consistency across platforms
+- Single codebase
+- Faster delivery
+
+What’s even cooler than the points above is that everything will be compiled into native code. So, we still get the same native performance.
+
+For more details and if you want to get hands-on, you can read more deeply at this link: Kotlin Multiplatform — Build Cross-Platform Apps
+
+[Link]
+
+So, in my opinion, Kotlin Multiplatform is definitely worth trying, especially for Android Native developers.
+
+Happy coding ~~
