@@ -4,34 +4,58 @@ import SocialIcon from '@/components/social-icons'
 
 export default function Footer() {
   return (
-    <footer>
-      <div className="mt-16 flex flex-col items-center">
-        <div className="mb-3 flex space-x-4">
-          <SocialIcon kind="mail" href={`mailto:${siteMetadata.email}`} size={6} />
-          <SocialIcon kind="github" href={siteMetadata.github} size={6} />
-          <SocialIcon kind="facebook" href={siteMetadata.facebook} size={6} />
-          <SocialIcon kind="youtube" href={siteMetadata.youtube} size={6} />
-          <SocialIcon kind="linkedin" href={siteMetadata.linkedin} size={6} />
-          <SocialIcon kind="twitter" href={siteMetadata.twitter} size={6} />
-          <SocialIcon kind="bluesky" href={siteMetadata.bluesky} size={6} />
-          <SocialIcon kind="x" href={siteMetadata.x} size={6} />
-          <SocialIcon kind="instagram" href={siteMetadata.instagram} size={6} />
-          <SocialIcon kind="threads" href={siteMetadata.threads} size={6} />
-          <SocialIcon kind="medium" href={siteMetadata.medium} size={6} />
+    <div class="mx-auto w-full px-6 antialiased sm:max-w-3xl sm:px-0">
+      <footer class="py-4 tracking-wider">
+        <div class="flex flex-col justify-between space-y-4 py-6 sm:flex-row sm:space-y-0">
+          <div class="flex flex-col gap-5 text-sm sm:flex-row">
+            <div>
+              <a
+                class="inline-block cursor-pointer hover:underline"
+                href="https://github.com/zacky-dzacky"
+              >
+                <p class="text-md text-slate-800 dark:text-slate-400">Github</p>
+              </a>
+            </div>
+            <div>
+              <a
+                class="inline-block cursor-pointer hover:underline"
+                href="https://linkedin.com/in/zacky-dzacky"
+              >
+                <p class="text-md text-slate-800 dark:text-slate-400">LinkedIn</p>
+              </a>
+            </div>
+            <div>
+              <a
+                class="inline-block cursor-pointer hover:underline"
+                href="https://x.com/b34utyisis"
+              >
+                <p class="text-md text-slate-800 dark:text-slate-400">Twitter</p>
+              </a>
+            </div>
+          </div>
+          <div class="flex flex-col gap-5 text-sm sm:flex-row">
+            <div>
+              <a class="inline-block cursor-pointer hover:underline" href="/cheatsheet">
+                <p class="text-md text-slate-800 dark:text-slate-400">{} Snippets</p>
+              </a>
+            </div>
+            {/* <div>
+              <a class="hover:underline cursor-pointer inline-block" href="/portfolio">
+                <p class="text-slate-800 dark:text-slate-400 text-md">Portfolio</p>
+              </a>
+            </div> */}
+            <div>
+              <a class="inline-block cursor-pointer hover:underline" href="/wiki">
+                <p class="text-md text-slate-800 dark:text-slate-400">Wiki</p>
+              </a>
+            </div>
+          </div>
         </div>
-        <div className="mb-2 flex space-x-2 text-sm text-gray-500 dark:text-gray-400">
-          <div>{siteMetadata.author}</div>
-          <div>{` • `}</div>
-          <div>{`© ${new Date().getFullYear()}`}</div>
-          <div>{` • `}</div>
-          <Link href="/">{siteMetadata.title}</Link>
+        <div class="flex flex-col justify-between space-y-2 sm:flex-row sm:space-y-0">
+          <p class="text-sm text-slate-400">Built with Next.js, Tailwind and Vercel</p>
+          <p class="text-sm text-slate-400">©2025 Zacky Syarief. All rights reserved.</p>
         </div>
-        <div className="mb-8 text-sm text-gray-500 dark:text-gray-400">
-          <Link href="https://github.com/timlrx/tailwind-nextjs-starter-blog">
-            Tailwind Nextjs Theme
-          </Link>
-        </div>
-      </div>
-    </footer>
+      </footer>
+    </div>
   )
 }
