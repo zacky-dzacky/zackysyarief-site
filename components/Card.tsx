@@ -1,7 +1,7 @@
 import Image from './Image'
 import Link from './Link'
 
-const Card = ({ title, description, imgSrc, href, tag }) => (
+const Card = ({ path, title, description, imgSrc, href, tag }) => (
   <a
     href={href}
     className="bg-day dark:bg-night bg-opacity-50 dark:bg-opacity-50 group relative flex transform cursor-pointer flex-wrap rounded border border-gray-200 p-px transition duration-500 hover:scale-105 dark:border-gray-700"
@@ -9,7 +9,7 @@ const Card = ({ title, description, imgSrc, href, tag }) => (
     <div className="bg-day dark:bg-night relative space-y-2">
       {imgSrc &&
         (href ? (
-          <Link href={href} aria-label={`Link to ${title}`}></Link>
+          <Link href={`/${path}`} aria-label={`Link to ${title}`}></Link>
         ) : (
           <Image
             alt={title}

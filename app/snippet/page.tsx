@@ -1,5 +1,6 @@
 import projectsData from '@/data/projectsData'
 import Card from '@/components/Card'
+import { allSnippets } from 'contentlayer/generated'
 import { genPageMetadata } from 'app/seo'
 import HeaderSnippet from '@/components/HeaderSnippet'
 
@@ -17,14 +18,15 @@ export default function Projects() {
         </div>
         <div className="container mx-auto py-12">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
-            {projectsData.map((d) => (
+            {allSnippets.map((d) => (
               <Card
+                path={d.path}
                 key={d.title}
                 title={d.title}
                 description={d.description}
-                imgSrc={d.imgSrc}
-                href={d.href}
-                tag={d.tag}
+                imgSrc={d.images}
+                href={d.path}
+                tag={d.tags}
               />
             ))}
           </div>

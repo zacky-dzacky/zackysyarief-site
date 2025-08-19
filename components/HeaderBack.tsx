@@ -7,7 +7,7 @@ import Image from '@/components/Image'
 import SearchButton from './SearchButton'
 import Head from 'next/head'
 
-const HeaderBack = () => {
+const HeaderBack = ({ link_prev }) => {
   let headerClass = 'flex items-center w-full bg-white dark:bg-gray-950 justify-between py-10'
   if (siteMetadata.stickyNav) {
     headerClass += ' sticky top-0 z-50'
@@ -15,7 +15,7 @@ const HeaderBack = () => {
 
   return (
     <header className={headerClass}>
-      <Link href="/" aria-label={siteMetadata.headerTitle}>
+      <Link href={`/${link_prev}`} aria-label={siteMetadata.headerTitle}>
         <div className="flex items-center justify-between">
           <div className="mr-3">
             <div className="xl:pt-8">

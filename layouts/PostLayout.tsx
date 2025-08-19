@@ -27,16 +27,25 @@ interface LayoutProps {
   authorDetails: CoreContent<Authors>[]
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
+  back_link?: { path: string; title: string }
   children: ReactNode
 }
 
-export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
+export default function PostLayout({
+  content,
+  authorDetails,
+  next,
+  prev,
+  children,
+  back_link,
+}: LayoutProps) {
   const { filePath, path, slug, date, title, tags } = content
   const basePath = path.split('/')[0]
 
   return (
-    <SectionContainer>
-      <HeaderBack />
+    <>
+      <HeaderBack link_prev={back_link} />
+      {/* <SectionContainer> */}
       <ScrollTopAndComment />
       <article>
         <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
@@ -150,6 +159,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
           </div>
         </div>
       </article>
-    </SectionContainer>
+      {/* </SectionContainer> */}
+    </>
   )
 }
