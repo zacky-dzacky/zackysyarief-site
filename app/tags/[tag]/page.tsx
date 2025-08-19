@@ -6,6 +6,7 @@ import { allBlogs } from 'contentlayer/generated'
 import tagData from 'app/tag-data.json'
 import { genPageMetadata } from 'app/seo'
 import { Metadata } from 'next'
+import HeaderSnippet from '@/components/HeaderSnippet'
 
 const POSTS_PER_PAGE = 5
 
@@ -49,11 +50,14 @@ export default async function TagPage(props: { params: Promise<{ tag: string }> 
   }
 
   return (
-    <ListLayout
-      posts={filteredPosts}
-      initialDisplayPosts={initialDisplayPosts}
-      pagination={pagination}
-      title={title}
-    />
+    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      <HeaderSnippet />
+      <ListLayout
+        posts={filteredPosts}
+        initialDisplayPosts={initialDisplayPosts}
+        pagination={pagination}
+        title={title}
+      />
+    </div>
   )
 }

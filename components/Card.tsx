@@ -1,24 +1,15 @@
 import Image from './Image'
 import Link from './Link'
 
-const Card = ({ title, description, imgSrc, href }) => (
-  <div className="md max-w-[544px] p-4 md:w-1/2">
-    <div
-      className={`${
-        imgSrc && 'h-full'
-      } overflow-hidden rounded-md border-2 border-gray-200/60 dark:border-gray-700/60`}
-    >
+const Card = ({ title, description, imgSrc, href, tag }) => (
+  <a
+    href={href}
+    className="bg-day dark:bg-night bg-opacity-50 dark:bg-opacity-50 group relative flex transform cursor-pointer flex-wrap rounded border border-gray-200 p-px transition duration-500 hover:scale-105 dark:border-gray-700"
+  >
+    <div className="bg-day dark:bg-night relative space-y-2">
       {imgSrc &&
         (href ? (
-          <Link href={href} aria-label={`Link to ${title}`}>
-            <Image
-              alt={title}
-              src={imgSrc}
-              className="object-cover object-center md:h-36 lg:h-48"
-              width={544}
-              height={306}
-            />
-          </Link>
+          <Link href={href} aria-label={`Link to ${title}`}></Link>
         ) : (
           <Image
             alt={title}
@@ -29,28 +20,19 @@ const Card = ({ title, description, imgSrc, href }) => (
           />
         ))}
       <div className="p-6">
-        <h2 className="mb-3 text-2xl leading-8 font-bold tracking-tight">
-          {href ? (
-            <Link href={href} aria-label={`Link to ${title}`}>
-              {title}
-            </Link>
-          ) : (
-            title
-          )}
-        </h2>
-        <p className="prose mb-3 max-w-none text-gray-500 dark:text-gray-400">{description}</p>
-        {href && (
-          <Link
-            href={href}
-            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 text-base leading-6 font-medium"
-            aria-label={`Link to ${title}`}
-          >
-            Learn more &rarr;
-          </Link>
-        )}
+        <h3 className="mt-2 mb-2 font-bold md:text-xl">{title}</h3>
+        <span className="inline-flex w-full items-center justify-between">
+          <span className="inline-block rounded border border-gray-700 px-2 py-1 text-xs font-medium">
+            {tag}
+          </span>
+          <time datetime="June 8, 2021" class="text-sm font-semibold text-gray-500">
+            June 8, 2021
+          </time>
+        </span>
+        <p className="prose mt-2 mb-3 max-w-none text-gray-500 dark:text-gray-400">{description}</p>
       </div>
     </div>
-  </div>
+  </a>
 )
 
 export default Card

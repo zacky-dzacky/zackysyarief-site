@@ -35,7 +35,7 @@ export default function Footer() {
           </div>
           <div className="flex flex-col gap-5 text-sm sm:flex-row">
             <div>
-              <a className="inline-block cursor-pointer hover:underline" href="/cheatsheet">
+              <a className="inline-block cursor-pointer hover:underline" href="/snippet">
                 <p className="text-md text-slate-800 dark:text-slate-400">{} Snippets</p>
               </a>
             </div>
