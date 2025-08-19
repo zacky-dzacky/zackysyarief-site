@@ -26,6 +26,27 @@ export default function Home({ posts }) {
           </p>
         </div>
       </div>
+      {/* <div className="container mx-auto mt-8">
+        <h2 className="text-4xl leading-9 font-extrabold tracking-tight text-gray-900 sm:leading-10 md:leading-14 dark:text-gray-100">
+          Work Experience
+        </h2>
+        <div className="ml-[22px]">
+          <div className="pl-4 flex flex-col place-items-start border-l border-b border-gray-300 dark:border-gray-700">
+            <span className="bg-white relative inline-block py-1 px-2 mt-4 ml-[-40px] rounded border border-gray-700 hover:border-accent bg-day dark:bg-night text-xs font-medium">Feb 2021 - Current</span>
+            <div className="flex flex-col place-content-between py-4">
+              <div className="relative font-bold whitespace-pre flex flex-row place-items-center">
+                <a className="text-2xl" href="https://www.linkedin.com/company/maybank" target="_blank" rel="noreferrer nofollow">Maybank</a>
+              </div>
+              <span className="mx-4 font-bold text-sm text-gray-700 dark:text-gray-300">› Tech Lead</span>
+              <div className="mt-4 prose dark:prose-dark">
+                <ul className="block text-base space-y-2">
+                  <li>Collaborating on building consumer experience products, working closely with Product Managers, Engineering Managers and various other stakeholders across Condé Nast.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          </div>
+      </div> */}
       <div className="container mx-auto mt-8">
         <h2 className="text-4xl leading-9 font-extrabold tracking-tight text-gray-900 sm:leading-10 md:leading-14 dark:text-gray-100">
           Recent Articles
