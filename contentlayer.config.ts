@@ -99,10 +99,10 @@ function createSearchIndexSnippet(allSnippets) {
     siteMetadata?.search?.provider === 'kbar' &&
     siteMetadata.search.kbarConfig.searchDocumentsPath
   ) {
-    writeFileSync(
-      `public/${path.basename(siteMetadata.search.kbarConfig.searchDocumentsPath)}`,
-      JSON.stringify(allCoreContent(sortPosts(allSnippets)))
-    )
+    // writeFileSync(
+    //   `public/${path.basename(siteMetadata.search.kbarConfig.searchDocumentsPath)}`,
+    //   JSON.stringify(allCoreContent(sortPosts(allSnippets)))
+    // )
     console.log('Local search index generated...')
   }
 }
@@ -233,6 +233,6 @@ export default makeSource({
     const { allBlogs } = await importData()
     createTagCount(allBlogs)
     createSearchIndex(allBlogs)
-    createSearchIndex(allSnippets)
+    createSearchIndexSnippet(allSnippets)
   },
 })
