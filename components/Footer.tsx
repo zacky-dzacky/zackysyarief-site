@@ -35,9 +35,9 @@ export default function Footer() {
           </div>
           <div className="flex flex-col gap-5 text-sm sm:flex-row">
             <div>
-              <a className="inline-block cursor-pointer hover:underline" href="/snippet">
+              <Link className="inline-block cursor-pointer hover:underline" href="/snippet">
                 <p className="text-md text-slate-800 dark:text-slate-400">{} Snippets</p>
-              </a>
+              </Link>
             </div>
             {/* <div>
               <a className="hover:underline cursor-pointer inline-block" href="/portfolio">
@@ -45,9 +45,9 @@ export default function Footer() {
               </a>
             </div> */}
             <div>
-              <a className="inline-block cursor-pointer hover:underline" href="/wiki">
+              <Link className="inline-block cursor-pointer hover:underline" href="/wiki">
                 <p className="text-md text-slate-800 dark:text-slate-400">Wiki</p>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
