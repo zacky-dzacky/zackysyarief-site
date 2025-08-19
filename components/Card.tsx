@@ -25,9 +25,9 @@ const Card = ({ title, description, imgSrc, href, tag }) => (
           <span className="inline-block rounded border border-gray-700 px-2 py-1 text-xs font-medium">
             {tag}
           </span>
-          <time datetime="June 8, 2021" class="text-sm font-semibold text-gray-500">
-            June 8, 2021
-          </time>
+          {/* <p className="text-sm font-semibold text-gray-500">
+            { date }
+          </p> */}
         </span>
         <p className="prose mt-2 mb-3 max-w-none text-gray-500 dark:text-gray-400">{description}</p>
       </div>
