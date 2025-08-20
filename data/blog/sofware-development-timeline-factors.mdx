@@ -1,0 +1,73 @@
+---
+title: 'Why Adding More Developers Doesn’t Always Shorten Your Project Timeline'
+date: '2025-08-12'
+lastmod: '2023-08-05'
+tags: ['sofware development']
+draft: false
+summary: 'As we know, every application development cycle always starts with planning/ideation, development, testing, and deployment, regardless of whether we use the waterfall or agile method. As software developers, we often focus only on the development part and sometimes skip other equally important parts, such as this planning phase'
+images: ['/static/images/twitter-card.png']
+---
+
+> The “9 Women, 1 Baby” Analogy That Explains Everything About Software Timelines
+
+As we know, every application development cycle always starts with planning/ideation, development, testing, and deployment, regardless of whether we use the waterfall or agile method. As software developers, we often focus only on the development part and sometimes skip other equally important parts, such as this planning phase
+
+Have you ever been in a position where you were asked to estimate the timeline for an application’s development, but you had very minimal data? For example, you only had a general idea of the features but didn’t know the exact number of developers or the complexity of those features. Usually, it’s based on that initial estimate that the features are then finalized and the number of developers is determined.
+
+That’s not wrong, of course, because sometimes in the planning process, things aren’t fully developed yet, and getting too detailed would take a very long time. In this situation, we often find ourselves projecting or predicting things without enough knowledge.
+
+We know that one of the important parts of engineering is predictability. However, this is often misunderstood as certainty, especially by people without an engineering background, specifically those outside of computer engineering.
+
+Let’s consider a case study. Assume a scenario where we are working on a new feature. With our experience and understanding of the existing code, the predictability we provide will be much more accurate. This is because we have comparisons and can use our previous experiences as a baseline. Based on this, we’ll assume that developing this new feature will take about six months.
+
+Up to this point, everything is still relatively predictable. Then, a product/project manager might simply say, “Okay, if it takes you six months to do this alone, then if I add six more people, this feature will be done in one month.
+
+From this perspective, we can conclude that we’re dealing with a product/project manager who doesn’t fully understand how to evaluate feature development. However, every software developer would intuitively say that it doesn’t work that way. So, how can we explain this in a way that’s more understandable?
+
+A product/project manager would probably ask, “Why can’t we just use that formula? We can use the existing features as a baseline, and you can teach them.” If we respond without a proper argument, this will just turn into an unproductive debate. To be able to measure a timeline more accurately, we need to understand a few parameters that come into play during software development. Let’s elaborate on some of those parameters.
+
+## Intercommunication
+
+Intercommunication, or inter-communication, is the minimum interaction that must occur between developers to at least avoid conflicts during software development. This isn't just formal communication; it also happens at the code level through things like code reviews, writing documentation, ensuring reusability, and other tasks that typically start once development begins.
+
+The number of possible inter-communications that need to happen can be calculated with the equation:
+
+```
+(n²−n)/2
+
+Where n is the number of developers.
+```
+
+Using this equation, we can see the inter-communication burden that arises when you add more developers. And don't forget, this number is directly proportional to time spent. The more developers you have, the more time is spent on communication.
+
+## Knowledge Gap
+
+Regardless of each developer’s experience level — whether junior, middle, or even senior — when a developer joins a project, there is definitely a knowledge gap that needs to be closed. Let’s say every developer needs one sprint to fill that knowledge gap; this will add to the overall timeline.
+
+So, this also needs to be factored in when measuring the application development timeline.
+
+## Surgeon Theory
+
+Imagine you’re in an operating room where a team of doctors is performing heart surgery. There might be 10 people in the room, including anesthesiologists, nurses, perfusionists, and even machine operators. The question is, are all of them performing the heart surgery on the patient?
+
+Of course not. Only one surgeon, and maybe one assistant, is actually performing the surgery. This is what’s known as the Surgeon’s Theory.
+
+The same principle applies to software development. Adding more developers is like adding more surgeons to the operating table. It only makes justification, processes, and decision-making more complicated. Instead, it’s better to add enablement teams that can help the process run smoothly. This could mean adding QA engineers, a copywriter or technical writer, or other teams that support the application development process.
+
+## Changes increase Entropy
+
+In physics, we know that entropy is a measure of disorder. The same concept applies to application development. When we add a new feature to an existing application, every change increases entropy. This happens even when the development is done by a developer who has been involved from the beginning. It’s especially true when we add new developers who aren’t yet familiar with the legacy code and have to get up to speed.
+
+We can, of course, minimize this by isolating components and applying the SOLID principles, but this factor still needs to be carefully considered as the number of developers increases.
+
+# Conclusion
+
+So, of course, the number of developers involved in a project doesn’t directly correlate with an increase in productivity. Other factors need to be considered. We need to understand these factors to be able to explain them when creating a project timeline.
+
+From my experience leading a project, the determination of story points or man-days must be done by the people who will be involved in the work, because only they can measure it more accurately. If a new developer is joining the project, then that developer is obligated to make an assessment based on the knowledge they have.
+
+The factors above are just a few examples we can consider when asked to estimate an application’s development timeline. There are, of course, many other parameters that can also be taken into account when measuring a timeline.
+
+To answer the question, “Can a baby be born in one month by assigning nine women?” Of course not, because there’s a process that cannot be skipped for a birth to happen. We can also use this question as an analogy.
+
+Happy Coding ~~
