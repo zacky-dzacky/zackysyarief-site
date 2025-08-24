@@ -13,7 +13,7 @@ We can use fastlane to make automation build process and even deploy android app
 
 ## Install Fastlane
 
-first thing first instal fastlane for your specific OS. follow this instruction [fastlane](https://docs.fastlane.tools/getting-started/android/setup/")
+First thing first instal fastlane for your specific OS. follow this instruction [fastlane](https://docs.fastlane.tools/getting-started/android/setup/")
 
 After installation and you got `fastlane` command on your terminal. Next init your project with fastlane:
 
@@ -21,6 +21,17 @@ After installation and you got `fastlane` command on your terminal. Next init yo
 fastlane init
 ```
 
+Then, after initialization, you will get `fastlane` folder within your android project.
+
 ## Init Firebase CLI
 
-## Init Google Play Console
+Make sure Firebase-CLI is installed on your devices. Follow this instruction [link](https://firebase.google.com/docs/cli#install-cli-mac-linux)
+After installation, init your android project with:
+
+```
+firebase init
+```
+
+## Deploy android app to firebase app distribution
+
+- Build open `AppFile` in fastlane folder
