@@ -34,4 +34,26 @@ firebase init
 
 ## Deploy android app to firebase app distribution
 
-- Build open `AppFile` in fastlane folder
+Follow this steps from build app to deploy to firebase app distribution:
+
+- Open `AppFile` in fastlane folder
+- Add script build app
+
+```
+gradle(task: 'bundle', build_type: options[:build_type])
+```
+
+- Add Script to deploy to app distribution
+
+```
+firebase_app_distribution(
+    app: `your_app_name`,
+    groups: `app_distribution_group`,
+    android_artifact_path: `aab_path`,
+    firebase_cli_token: `token`,
+    android_artifact_type: `build_variant`,
+    release_notes: `note_to_firebase_app_distribution`
+  )
+```
+
+That's All. Make local deployment faster using Fastlane.
