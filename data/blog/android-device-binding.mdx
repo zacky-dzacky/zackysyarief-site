@@ -10,11 +10,16 @@ summary: 'Device binding is a technique to make sure only trusted android app ca
 
 Device binding is a technique to make sure only trusted android app can communicate with backend.
 With proper handshake process that Android app will publish public key that can be used by server.
+
 If we have an android app and already logged in, can we used another device to log in too?
 This question make we think about what is device binding is. Device binding is not prevents us to only use single device, point of device binding is, all devices that we used should registered to server to communicate to server.
 Here are some key points to consider for device binding:
 
 - All registered devices should unique
+  Generating a unique ID is very difficult if we generate the ID without any reference data from the backend.
+  Ideally, we need one static key that can be used to generate a unique ID.
+  The safest method is to use asymmetric encryption, where we use the public key as part of the combination to generate the unique ID.
+  We can use **RSA (Rivest-Shamir-Adleman)**, **ECC (Elliptic Curve Cryptography)**, or **Digital Signature Algorithm (DSA)**
 - Only one device is primary device
 - Asymetric Encryption between client and server
 
