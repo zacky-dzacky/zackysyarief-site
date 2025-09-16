@@ -20,8 +20,11 @@ export default function Home({ posts }) {
             </span>
           </h2>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            I'm Zacky! Seasoned T-shaped developer with expertise in <b>AI Engineering</b> currently focused on Generative AI, Fine-Tuning LLMs, and RAG-Powered Agents. <br/>I do love to write about <b>Android Native</b> especially <b>Kotlin Multiplatform</b> and {' '}
-            <b>Android Security as well.</b> <br/>I Speak <b>Python, Java/Kotlin & Haskell</b> fluently.{' '}
+            I'm Zacky! Seasoned T-shaped developer with expertise in <b>AI Engineering</b> currently
+            focused on Generative AI, Fine-Tuning LLMs, and RAG-Powered Agents. <br />I do love to
+            write about <b>Android</b> especially <b>Kotlin Multiplatform</b> and
+            <b> Android Security</b> as well. <br />I Speak <b>Python, Java/Kotlin & Haskell</b>{' '}
+            fluently.{' '}
           </p>
         </div>
       </div>
