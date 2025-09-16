@@ -20,9 +20,8 @@ export default function Home({ posts }) {
             </span>
           </h2>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            I love to write about Android Native especially Kotlin Multiplatform,{' '}
-            <b>Android Security</b>, and <b>Java/Kotlin</b>. As well as design and archicture in
-            mobile development.{' '}
+            I'm Zacky! Seasoned T-shaped developer with expertise in <b>AI Engineering</b> currently focused on Generative AI, Fine-Tuning LLMs, and RAG-Powered Agents. <br/>I do love to write about <b>Android Native</b> especially <b>Kotlin Multiplatform</b> and {' '}
+            <b>Android Security as well.</b> <br/>I Speak <b>Python, Java/Kotlin & Haskell</b> fluently.{' '}
           </p>
         </div>
       </div>
