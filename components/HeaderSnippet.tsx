@@ -31,7 +31,7 @@ const HeaderSnippet = () => {
                 zacky syarief
               </h1>
               <h2 className="text-xl font-light text-slate-700 sm:text-2xl dark:text-slate-300">
-                Mobile Engineer
+                AI Engineer
               </h2>
             </div>
           ) : (
