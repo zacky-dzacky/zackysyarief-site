@@ -8,8 +8,10 @@ summary: 'GPT3.5 with 175B parameters cost approximately $4 Billion within 7 mon
 images: ['/static/images/twitter-card.png']
 ---
 
-What Parameter is in Foundation Model
-Model parameters are the internal configuration variables of a machine learning model that control how it processes data and makes predictions. Parameter values can determine whether an artificial intelligence (AI) model’s outputs reflect real-world outcomes — how it transforms input data to outputs such as generated text or images. (IBM’s website, Detail)
+## What Parameter is in Foundation Model
+>
+> Model parameters are the internal configuration variables of a machine learning model that control how it processes data and makes predictions. Parameter values can determine whether an artificial intelligence (AI) model’s outputs reflect real-world outcomes — how it transforms input data to outputs such as generated text or images. (IBM’s website, [Detail](https://www.ibm.com/think/topics/model-parameters))
+>
 
 As we know, parameters are crucial because paramters determine how accurate and knowledgeable a foundation model is.
 
@@ -17,17 +19,18 @@ When we download an open model, for example, Llama3.1:8b, what does this name me
 
 The model’s context length is generally has 2048 tokens, which means it can only hold 2048 tokens.
 
-What is a token?
+What is a **token**?
 
-Is a token the same as a word?
+Is a token the same as a **word**?
 
-The answer is no, a token is the smallest unit of a word. We can consider one word like Data as 1 token. However, if we find the word isn't, it is considered 2 tokens because it is a combination of the words is and not.
+The answer is no, a token is the smallest unit of a word. We can consider one word like `Data` as 1 token. However, if we find the word `isn't`, it is considered 2 tokens because it is a combination of the words `is` and `not`.
 
 That’s why the size of an open model can generally be multiplied by 2. For example, Llama 2:7B, when we multiply it by 2, will result in a file of approximately 14GB.
 
-Calculate parameter processing
-Note, this this calculation cited by the Book AI Engineering (Chip Huyen)
-
+## Calculate parameter processing
+>
+> Note, this this calculation cited by the Book AI Engineering (Chip Huyen)
+>
 Knowing the number of parameters helps us estimate the compute resources needed to train and run this model. For example, if a model has 7 billion parameters, and each parameter is stored using 2 bytes (16 bits), then we can calculate that the GPU memory needed to do inference using this model will be at least 14 billion bytes (14 GB)
 
 Pre-training large models requires compute. One way to measure the amount of compute needed is by considering the number of machines, e.g., GPUs, CPUs, and TPUs. However, different machines have very different capacities and costs. An NVIDIA A10 GPU is different from an NVIDIA H100 GPU and an Intel Core Ultra Processor. A more standardized unit for a model’s compute requirement is FLOP, or floating point operation. FLOP measures the number of floating point operations performed for a certain task. Google’s largest PaLM-2 model, for example, was trained using 1022 FLOPs (Chowdhery et al., 2022). GPT-3–175B was trained using 3.14 × 1023 FLOPs (Brown et al., 2020).
@@ -35,8 +38,9 @@ Pre-training large models requires compute. One way to measure the amount of com
 The plural form of FLOP, FLOPs, is often confused with FLOP/s, floating point operations per Second. FLOPs measure the compute requirement for a task, whereas FLOP/s measures a machine’s peak performance. For example, an NVIDIA H100 NVL GPU can deliver a maximum of 60 TeraFLOP/s: 6 × 1013 FLOPs a second or 5.2 × 1018 FLOPs a day.16
 
 Be alert for confusing notations. FLOP/s is often written as FLOPS, which looks similar to FLOPs. To avoid this confusion, some companies, including OpenAI, use FLOP/s-day in place of FLOPs to measure compute requirements:
-
-1 FLOP/s-day = 60 × 60 × 24 = 86,400 FLOPs
+>
+> 1 FLOP/s-day = 60 × 60 × 24 = 86,400 FLOPs
+>
 
 It uses FLOPs for counting floating point operations and FLOP/s for FLOPs per second. Assume that you have 256 H100s. If you can use them at their maximum capacity and make no training mistakes, it’d take you (3.14 × 1023) / (256 × 5.2 × 1018) = ~236 days, or approximately 7.8 months, to train GPT-3–175B.
 
@@ -50,23 +54,23 @@ million:
 
 $2/H100/hour × 256 H100 × 24 hours × 256 days / 0.7 = $4,142,811.43
 
-Mixture of Expertise
+## Mixture of Expertise
 Besides that, there are also models that consist of several experts, or are called mixture-of-experts. An example is Mixtral 8x7B. This means that in one model, it has 8 kinds of experts, each having 7B parameters. In other words, this model actually has 58 billion parameters. However, there are certainly parameters that are shared, so the total parameters might only be around 46 billion.
 
 At each layer, for each token, only two experts are active. This means that only 12.9 billion parameters are active for each token. While this model has 46.7 billion parameters, its cost and speed are the same as a 12.9-billion-parameter model.
 
-Computational Cost
+## Computational Cost
 You might start to feel that the more parameters a foundation model has, the more accurate its response will be. This isn’t entirely wrong. I conducted a test using gemma3:1b with gemma3:4b with the following results:
 
-Response using gemma3:1b
-Press enter or click to view image in full size
++ Response using gemma3:1b
+![A beautiful sunset](/static/images/gemma3_1b.png)
 
-Response using gemma3:4b
-Press enter or click to view image in full size
++ Response using gemma3:4b
+![A beautiful sunset](/static/images/gemma3_4b.png)
 
 Based on both results above, it can be concluded that a foundation model using more parameters like gemma3:4b can provide better Multi-Step Reasoning and Constraint Following. However, what needs to be underlined is that the use of a foundation model with more parameters will use more GPU. Greater GPU usage is highly correlated with greater electricity consumption and will lead to higher costs.
 
-Conclusion
+## Conclusion
 Understanding what parameters are and how to calculate them will help us when choosing a model. Of course, if we want deeper reasoning and context comprehension, we need a foundation model that has a high number of parameters. However, if we only want to solve a problem with an existing and simpler context, using a foundation model with fewer parameters would be very wise.
 
 Happy Coding ~~

@@ -1,8 +1,8 @@
 {
+  "ai": 2,
   "security": 3,
   "android": 5,
-  "ai": 2,
-  "kotlin": 2,
   "sofware-development": 1,
+  "kotlin": 2,
   "kotlin-multiplatform": 1
 }
