@@ -1,0 +1,50 @@
+---
+title: 'MCP on Claude Desktop'
+description: 'Easy way to Setting up and Running MCP Server using Claude Desktop MacOS'
+date: '2025-09-30'
+lastmod: '2025-09-30'
+tags: ['AI']
+draft: false
+---
+
+MCP server stands of (Model Context Protocol) is new protocol that enables AI Application to connect with other external System. 
+
+
+### Setup Your Own MCP Server
+For skeleton running MCP Server, checkout here [link](https://github.com/zacky-dzacky/mcp-in-practice)
+
+### Connect MCP Server to Claude Desktop
+1. Open Claude Config
+```
+cd ~/Library/Application Support/Claude/claude_desktop_config.json
+```
+
+2. Edit & Add your setup into McpServer Config
+```
+{
+  "mcpServers": {
+    
+    "azureDevOps": {
+      "command": "npx",
+      "args": ["-y", "@tiberriver256/mcp-server-azure-devops"],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "YOUR_AZURE_DEVOPS_URL",
+        "AZURE_DEVOPS_AUTH_METHOD": "pat",
+        "AZURE_DEVOPS_PAT": "PAT_VALUE",
+        "AZURE_DEVOPS_DEFAULT_PROJECT": "AZURE_DEVOPS_DEFAULT_PROJECT"
+      }
+    },
+    "dataset": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/ABSOLUTE/PATH/TO/PARENT/FOLDER/dataset",
+        "run",
+        "dataset.py"
+      ]
+    }
+  }
+}
+```
+
+3. Check on your Claude Desktop
