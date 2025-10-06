@@ -26,7 +26,7 @@ const projectsData: Project[] = [
     description: `Kalee is an android tool to make device binding process on android smooth and easy to manage.`,
     imgSrc: '/static/images/google.png',
     href: 'https://github.com/zacky-dzacky/kalee',
-    tag: 'Android',
+    tag: 'Android'
   }
 ]
 
