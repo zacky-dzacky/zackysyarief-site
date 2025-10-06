@@ -1,4 +1,6 @@
 {
+  "ai-agent": 1,
+  "mcp": 1,
   "ai": 2,
   "security": 3,
   "android": 5,

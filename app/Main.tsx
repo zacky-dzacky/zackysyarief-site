@@ -22,7 +22,7 @@ export default function Home({ posts }) {
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
             Here, I talk more about <b className="text-red-700">AI Engineering</b>.<br />
             Focused on Generative AI, Fine-Tuning LLMs, and RAG-Powered Agents. <br />
-            Writes about <b className="text-green-600">Android</b>, with a focus on{' '}
+            As well as <b className="text-green-600">Android</b>, with a focus on{' '}
             <b className="text-purple-500">Kotlin Multiplatform</b> and
             <b className="text-black-500"> Android Security</b>. <br />I Speak{' '}
             <b className="text-blue-500">Python, Java/Kotlin & Haskell</b> fluently.{' '}

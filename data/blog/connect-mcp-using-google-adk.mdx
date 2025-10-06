@@ -1,0 +1,371 @@
+---
+title: Connect MCP Server using Google ADK (Completely Free using Open Model)
+date: '2025-10-06'
+tags: ['AI Agent', 'MCP']
+draft: false
+summary: 'Google ADK (Agent Development Kit) is is a flexible and modular framework for developing and deploying AI agents. While optimized for Gemini and the Google ecosystem, ADK is model-agnostic, deployment-agnostic, and is built for compatibility with other frameworks. ...'
+---
+
+Google ADK (Agent Development Kit) is is a flexible and modular framework for developing and deploying AI agents. While optimized for Gemini and the Google ecosystem, ADK is model-agnostic, deployment-agnostic, and is built for compatibility with other frameworks. ADK was designed to make agent development feel more like software development, to make it easier for developers to create, deploy, and orchestrate agentic architectures that range from simple tasks to complex workflows.
+
+MCP (Model Context Protocol) is an open-source standard for connecting AI applications to external systems. MCP consist of MCP Client and MCP Server. MCP client acts as orchestrator to choose relevant query to your action.
+
+Connecting Google ADK to MCP means ADK as a MCP client, in most cases, user will using Claude Desktop or VS Code to Prompt using MCP Server. In this case I used Google ADK where ADK will act as orchestrator so it can choose relevant tools from MCP Server or even produce its own response if there are no relevant tools.
+
+Tech Stack I used in this project are:
+1. Google ADK
+2. MCP
+3. Starlette
+4. Llamma3.2
+
+# Init Project
+
+First thing first, we need to init python project using uv. UV is An extremely fast Python package and project manager, written in Rust. Similar like pip or poetry.
+
+```
+uv init
+```
+
+It will initialize a python project and create some files, like
+
+```
+.python-version
+main.py
+pyproject.toml
+README.md
+```
+
+After project initialization, our next action is setup and create our MCP Server that contains some tools with each capabilities.
+
+# Install MCP Server
+
+Install dependecies. For this project, weed need some dependencies to activate MCP server, like:
+
+```
+uv add "mcp[cli]" httpx
+uv add starlette
+uv add bs4
+uv add html2text
+```
+
+Create a folder named `server` to store all the MCP server files.
+
+```
+# Create server folder
+mkdir server && cd server
+
+# Create MCP file
+touch server.py
+```
+
+# Setup and create tools MCP Server
+Add codes below into server.py
+
+```
+from typing import Any
+import httpx
+import requests
+from mcp.server.fastmcp import FastMCP
+from mcp.server.sse import SseServerTransport
+from mcp.shared.exceptions import McpError
+from mcp.types import ErrorData, INTERNAL_ERROR, INVALID_PARAMS
+import uvicorn
+
+from starlette.applications import Starlette
+from starlette.routing import Route, Mount
+from starlette.requests import Request
+
+from bs4 import BeautifulSoup
+from html2text import html2text
+
+# Initialize FastMCP server
+mcp = FastMCP("weather")
+
+# Constants
+NWS_API_BASE = "https://api.weather.gov"
+USER_AGENT = "weather-app/1.0"
+
+async def make_nws_request(url: str) -> dict[str, Any] | None:
+    """Make a request to the NWS API with proper error handling."""
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/geo+json"
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, headers=headers, timeout=30.0)
+            response.raise_for_status()
+            return response.json()
+        except Exception:
+            return None
+
+def format_alert(feature: dict) -> str:
+    """Format an alert feature into a readable string."""
+    props = feature["properties"]
+    return f"""
+        Event: {props.get('event', 'Unknown')}
+        Area: {props.get('areaDesc', 'Unknown')}
+        Severity: {props.get('severity', 'Unknown')}
+        Description: {props.get('description', 'No description available')}
+        Instructions: {props.get('instruction', 'No specific instructions provided')}
+    """
+
+@mcp.tool()
+async def get_alerts(state: str) -> str:
+    """Get weather alerts for a US state.
+
+    Args:
+        state: Two-letter US state code (e.g. CA, NY)
+    """
+    url = f"{NWS_API_BASE}/alerts/active/area/{state}"
+    data = await make_nws_request(url)
+
+    if not data or "features" not in data:
+        return "Unable to fetch alerts or no alerts found."
+
+    if not data["features"]:
+        return "No active alerts for this state."
+
+    alerts = [format_alert(feature) for feature in data["features"]]
+    return "\n---\n".join(alerts)
+
+@mcp.tool()
+async def get_forecast(latitude: float, longitude: float) -> str:
+    """Get weather forecast for a location.
+
+    Args:
+        latitude: Latitude of the location
+        longitude: Longitude of the location
+    """
+    # First get the forecast grid endpoint
+    points_url = f"{NWS_API_BASE}/points/{latitude},{longitude}"
+    points_data = await make_nws_request(points_url)
+
+    if not points_data:
+        return "Unable to fetch forecast data for this location."
+
+    # Get the forecast URL from the points response
+    forecast_url = points_data["properties"]["forecast"]
+    forecast_data = await make_nws_request(forecast_url)
+
+    if not forecast_data:
+        return "Unable to fetch detailed forecast."
+
+    # Format the periods into a readable forecast
+    periods = forecast_data["properties"]["periods"]
+    forecasts = []
+    for period in periods[:5]:  # Only show next 5 periods
+        forecast = f"""
+            {period['name']}:
+            Temperature: {period['temperature']}°{period['temperatureUnit']}
+            Wind: {period['windSpeed']} {period['windDirection']}
+            Forecast: {period['detailedForecast']}
+        """
+        forecasts.append(forecast)
+
+    return "\n---\n".join(forecasts)
+
+@mcp.tool()
+async def get_random_joke() -> str:
+    """Get a random joke."""
+    url = "https://official-joke-api.appspot.com/random_joke"
+    data = await make_nws_request(url)
+
+    if not data:
+        return "Unable to fetch a joke at this time."
+
+    return f"{data['setup']} - {data['punchline']}"
+
+@mcp.tool()
+def extract_wikipedia_article(url: str) -> str:
+    """
+    Retrieves and processes a Wikipedia article from the given URL, extracting
+    the main content and converting it to Markdown format.
+
+    Usage:
+        extract_wikipedia_article("https://en.wikipedia.org/wiki/Gemini_(chatbot)")
+    """
+    try:
+        if not url.startswith("http"):
+            raise ValueError("URL must begin with http or https protocol.")
+
+        response = requests.get(url, timeout=8)
+        if response.status_code != 200:
+            raise McpError(
+                ErrorData(
+                    code=INTERNAL_ERROR,
+                    message=f"Unable to access the article. Server returned status: {response.status_code}"
+                )
+            )
+        soup = BeautifulSoup(response.text, "html.parser")
+        content_div = soup.find("div", {"id": "mw-content-text"})
+        if not content_div:
+            raise McpError(
+                ErrorData(
+                    code=INVALID_PARAMS,
+                    message="The main article content section was not found at the specified Wikipedia URL."
+                )
+            )
+        markdown_text = html2text(str(content_div))
+        return markdown_text
+
+    except Exception as e:
+        raise McpError(ErrorData(code=INTERNAL_ERROR, message=f"An unexpected error occurred: {str(e)}")) from e
+
+
+sse = SseServerTransport("/message/")
+
+async def handle_sse(request: Request) -> None:
+    _server = mcp._mcp_server
+    async with sse.connect_sse(
+        request.scope,
+        request.receive,
+        request._send
+    ) as (reader, writer): await _server.run(
+        reader,
+        writer,
+        _server.handle_request(request)
+    )
+
+app = Starlette(
+    debug=True,
+    routes=[
+        Route("/sse", endpoint=handle_sse),
+        Mount("/message", app=sse.handle_post_message)
+    ]
+)
+
+if __name__ == "__main__":
+    print("MCP Server running...")
+    # Initialize and run the server
+    # mcp.run(transport='stdio')
+    uvicorn.run(app, host="localhost", port=8002)
+```
+
+To run your MCP Server, I recommend you run using inspection as you have more tools to debug your MCP Server.
+
+```
+# Run MCP server 
+uv run mcp_server.py
+
+# We can also run inspection (Better)
+uv run mcp dev dataset.py
+```
+
+After run script above, on our terminal will show like below,
+![A beautiful sunset](/static/images/mcp_live.webp)
+
+On our browser, choose Transport Type STDIO, then copy Servers File . Save this config, this will copy all config server that we can used in our google adk on next step.
+
+Press enter or click to view image in full size
+![A beautiful sunset](/static/images/mcp_inspect.webp)
+
+# Install Google ADK
+Then add google adk library using uv
+
+```
+uv add google-adk
+```
+
+Create a folder within named client then create a file __init__.py and `client.py`
+
+```
+client
+|--- __init__.py
+|--- prompt.py
+.python-version
+pyproject.toml
+README.md
+```
+
+# Setup ADK using open model
+To connect google adk with local open model, we need to install `litellm` library first.
+
+```
+uv add litellm
+```
+
+Make sure you have open model installed on your device. Check this link to install ollama on your device to used open model. In this case, I use Llama3.2 as my model
+
+```
+local_llama_model = LiteLlm(model="ollama_chat/llama3.2")
+"""Creates an ADK Agent equipped with tools from the MCP Server."""
+
+root_agent = Agent(
+    model=local_llama_model,
+    name="assistant",
+    instruction="""Help user extract and summarize the article from wikipedia link.
+    Use the following tools to extract wikipedia article:
+    - extract_wikipedia_article
+
+    Once you retrieve the article, always summarize it in a few sentences for the user.
+    """,
+    tools=[setup_mcp_server()],
+)
+```
+
+# Connect ADK to MCP Server
+After we setup ADK using open mode, we need to setup connection to MCP server that we set before. Paste the config server
+
+```
+def setup_mcp_server():
+    server = MCPToolset(
+        connection_params=StdioConnectionParams(
+            server_params=StdioServerParameters(
+                command='uv',
+                args=[
+                    "run",
+                    "--with",
+                    "mcp",
+                    "mcp",
+                    "run",
+                    "mcp_server.py"
+                ],
+                env={
+                    "HOME": os.getenv("MCP_HOME"),
+                    "LOGNAME": os.getenv("MCP_LOGNAME"),
+                    "PATH": os.getenv("MCP_PATH"),
+                    "SHELL": os.getenv("MCP_SHELL"),
+                    "TERM": os.getenv("MCP_TERM"),
+                    "USER": os.getenv("MCP_USER")
+                }
+            )
+        )
+    )
+    return server
+```
+
+Then update your `__init__.py` file that import `client.py` function.
+
+```
+from . import client
+```
+
+Then run your adk on web browser using this command
+
+```
+uv adk run web
+```
+
+If all running well, it will showing like image below.
+
+![A beautiful sunset](/static/images/adk_live.webp)
+
+# Try to Prompt
+As you can see from screenshot below, when I prompt tell me a joke the open model can point this into tool get_random_joke that exist in MCP Server. Cool isn’t it?
+
+![A beautiful sunset](/static/images/prompt_preview.webp)
+
+# Conclusion
+To be able to communicate with the MCP Server, there are many alternatives that can be used, one of which is using Google ADK. With the added use of an open model, we can have the freedom to explore. I’m adding a GitHub link if you’d like to explore further, you can access [here](https://github.com/zacky-dzacky/mcp-in-practice) (Please give it star if you like it)
+
+Happy coding ~~
+
+
+# References
+
+Google ADK [detail](https://google.github.io/adk-docs/)
+
+MCP (Model Context Protocol) [detail](https://modelcontextprotocol.io/docs/getting-started/intro)
+
+Astral UV [detail](https://docs.astral.sh/uv/)

@@ -1,4 +1,3 @@
-import projectsData from '@/data/projectsData'
 import Card from '@/components/Card'
 import { allSnippets } from 'contentlayer/generated'
 import { genPageMetadata } from 'app/seo'
