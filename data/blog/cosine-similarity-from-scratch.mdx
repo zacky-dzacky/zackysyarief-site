@@ -1,5 +1,5 @@
 ---
-title: '[Draft] How does cosine similarity work with vectors? Hands on using python & ollama'
+title: '[Draft] Working With vector and cosine similiraty using Sqlite + Ollama'
 date: '2025-11-14'
 tags: ['AI','RAG']
 draft: true
@@ -18,7 +18,30 @@ When we design RAG Architecture, the most important part is how we transform our
 ## Cosine Similarity Formula
 
 ## Hands On 
-+ Transform text  into vector
+- <h3>Transform text  into vector</h3>
+
+When we talk about search mechanism, there are two kind of those, which are Lexical and semantic search. Lexical similarity means that when we search a text, we make sure all the text that we'are looking is exactly same with exisitng data. for example:
+```
+# Given text
+`Today is monday`
+`Monday is funtastic day`
+`Elephant is the biggest living animal on land`
+
+# Given query
+`monday`
+
+# So when we search text monday, the given text will be part of the result
+`Today is monday`
+`Monday is funtastic day`
+```
+
+Different with Lexical, semantic search give us the capability to go beyonds text similarity, we can search by meaning similirity. As we know that `book` is similir like `textbook`. So, that's why we vector, as vector data give us the flexibility to count the distance/similarity between text. For example:
+
+```
+# Given 
+
+```
+There is to kind of First thing first, we need to make sure all the data transformed into vector. As we know that for semantice
 + Saved vector to SQLITE
 + Query embedding to vector
 + Calculate cosine distance
