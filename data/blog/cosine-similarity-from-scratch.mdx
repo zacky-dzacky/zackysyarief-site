@@ -1,5 +1,5 @@
 ---
-title: '[Draft] Working With vector and cosine similiraty using Sqlite + Ollama'
+title: Working with vector and cosine similiraty using Sqlite + EmbeddingGemma
 date: '2025-11-14'
 tags: ['AI','RAG']
 draft: true
@@ -7,18 +7,62 @@ summary: 'When we design RAG Architecture, the most important part is how we tra
 ---
 
 ## Background
-When we design RAG Architecture, the most important part is how we transform our exisiting data into vectors using embedding process. Let say we have a collection of journals and we want those collections to be context in addtion to our prompt, we need select the relevant data within those journals. But what if the relevant data included into several documents, 
+When we design RAG Architecture In terms of AI engineering, the most important part is how we transform our exisiting data into vectors using embedding process. Let say we have a collection of journals and we want those collections to be context in addtion to our prompt, we need select the relevant data within those journals. 
+
+In the realm of data science, machine learning, and information retrieval, the ability to quantify similarity between data points is fundamental. Whether comparing documents, user preferences, or feature vectors, an accurate similarity measure dictates the effectiveness of algorithms used for searching, clustering, and recommendation systems.
+
+The core challenge lies in translating complex data into a numerical representation—or vectors in a multi-dimensional space—and then calculating the "closeness" between these vectors. That's why we need to technique to check similarity between text.
 
 ## Type of similarity
 + Cosine similarity
-+ Euclidean Similarity
-+ Jaccard Similarity
-+ Dot Product
+
+At its core, cosine similarity measures how aligned two vectors are by calculating the cosine of the angle between them.
+
+In real-world applications like comparing documents, data is represented as vectors in multi-dimensional space. Each dimension might represent a specific word, attribute or action, and the value in that dimension reflects how prominent or important that item is.
+
++ <b>Euclidean Similarity</b>
+
+This metric calculates the straight-line distance between two points in a vector space. It’s intuitive and commonly used in data analysis, especially for comparing numeric data or physical features. However, in high-dimensional spaces where vectors tend to converge in distance, Euclidean distance becomes less reliable for tasks like clustering or information retrieval.
+
++ <b>Jaccard Similarity</b>
+
+Jaccard similarity measures the overlap between two datasets by dividing the size of the intersection by the size of the union. It's commonly applied to datasets involving categorical or binary data—such as tags, clicks or product views—and is particularly useful for recommendation systems. While Jaccard focuses on presence or absence, it doesn’t account for frequency or magnitude.
+
++ <b>Dot Product</b>
+
+The dot product of vectors A and B reflects how closely they point in the same direction, but without normalizing magnitudes. This factor makes it sensitive to scale: vectors with large values may appear more similar even if their direction differs.
+
+Cosine similarity improves on this metric by dividing the dot product of the vectors by the product of the magnitudes of the vectors (the cosine similarity formula). Cosine similarity is therefore more stable for comparing non-zero vectors of varying lengths, especially in high-dimensional datasets.
+
+In practice, organizations often use cosine similarity measures alongside other metrics depending on the structure of the dataset and the type of dissimilarity they want to avoid.
+
+For instance, similarity search in NLP or LLM applications often combines cosine distance with embedding models trained on deep learning algorithms. Cosine similarity calculations are also integrated into open source tools like Scikit-learn, TensorFlow and PyTorch, making it easier for data scientists to compute cosine similarity across large-scale datasets.
 
 ## Cosine Similarity Formula
 
+To calculate cosine similarity:
+
+1. Find the dot product: Multiply the corresponding values in each vector and add the results together. This captures how directionally aligned the vectors are.
+2. Determine the magnitude: The magnitude (or length) of each vector is calculated using the square root of the sum of its squared components.
+3. Calculate the cosine similarity: The cosine similarity is found by dividing the dot product (step 1) by the product of the magnitudes of the vectors (step 2). The result is a cosine similarity score between -1 and 1.
+
+The formula can be represented as:
+
+Cosine similarity = (A · B) / (||A|| × ||B||)
+
+Where:
+
+<b>A · B</b> is the dot product of vectors A and B
+
+<b>||A||</b> is the magnitude (length) of vector A
+
+<b>||B||</b> is the magnitude of vector B
+
+
+The resulting score ranges from <b>-1 to 1</b>.
+
 ## Hands On 
-- <h3>Transform text  into vector</h3>
+1. <h3>Transform text  into vector</h3>
 
 When we talk about search mechanism, there are two kind of those, which are Lexical and semantic search. Lexical similarity means that when we search a text, we make sure all the text that we'are looking is exactly same with exisitng data. for example:
 ```
@@ -38,16 +82,161 @@ When we talk about search mechanism, there are two kind of those, which are Lexi
 Different with Lexical, semantic search give us the capability to go beyonds text similarity, we can search by meaning similirity. As we know that `book` is similir like `textbook`. So, that's why we vector, as vector data give us the flexibility to count the distance/similarity between text. For example:
 
 ```
-# Given 
+# Given text
+`I love to write code every day.`
+`Coding is my ultimate passion.`
+
+# Given query
+`what is my hobby?"
+
+# So, there is no word `hobby` on those sentences, but the meaning is the same, the result would be
+`I love to write code every day.`
+`Coding is my ultimate passion.`
+```
+
+We can achieved this semantic meaning using vector, as with using the vector we can calculate distance between sentences. 
+To achieved this, we need to transform all our data into vector, using Embedding process. 
++ Tranform using EmbeddingGemma model
+
+In this case we're gonna used SentenceTransformer from HuggingFace to get embeddinggemma model 
+```
+from sentence_transformers import SentenceTransformer
+
+model_id = "google/embeddinggemma-300M"
+model = SentenceTransformer(model_id)
+```
+
++ Fetch collection data and tranform
+
+After we got all collections, then we loop the data and encode to vector. This process will returning array of vector from sentences
+```
+docs = ["I love pizza",
+    "Bicycle is a good transportation",
+    "Pizza is the most delicious food in the world",
+    ]
+
+for d in docs:
+    # return array of vector from sentences
+    v = model.encode(d).tolist()
+```
+
+2. <h3>Saved vector to SQLITE</h3>
+
+
+The idea is simple, we create a table using sqlite and then create two column, first to save text, and second to save vector's text.
+```
+import sqlite3
+
+conn = sqlite3.connect("vectors.db")
+c = conn.cursor()
+c.execute("CREATE TABLE IF NOT EXISTS vectors (id INTEGER PRIMARY KEY, text TEXT, vec TEXT)")
 
 ```
-There is to kind of First thing first, we need to make sure all the data transformed into vector. As we know that for semantice
-+ Saved vector to SQLITE
-+ Query embedding to vector
-+ Calculate cosine distance
-+ Result
+
+After we create a table `vectors`. Now, we can combine the process encoding text to vector with `INSERT` process like shown, below. 
+
+```
+# generate embeddings and insert
+for d in docs:
+    v = model.encode(d).tolist()
+    c.execute("INSERT INTO vectors (text, vec) VALUES (?,?)", (d, json.dumps(v)))
+```
+Now, we a have a table that contains our data and its vector in a row. 
+
+
+3. <h3>Query embedding to vector</h3>
+
+Get All the data that we store before in SQLITE using `SELECT`, which has our vector of data collections.
+```
+def query_vector_db():
+    import sqlite3
+    conn = sqlite3.connect("vectors.db")
+    c = conn.cursor()
+
+    rows = c.execute("SELECT text, vec FROM vectors").fetchall()
+    return rows
+```
+
+This is the flow we convert the query question into the vector, why we should tranform the question into the vector like data? That's because we need to find similarity score between vector question and vector our dataset.
+```
+def query_embedding(query: str):
+    from sentence_transformers import SentenceTransformer
+
+    model_id = "google/embeddinggemma-300M"
+    model = SentenceTransformer(model_id)
+    
+    qvec = model.encode(query).tolist()
+    return qvec
+```
+
+4. <h3>Calculate cosine distance</h3>
+
+```
+
+def cosine_similarity(v1, v2):
+    import numpy as np
+    from numpy.linalg import norm
+
+    v1 = np.array(v1)
+    v2 = np.array(v2)
+
+    cosine = np.dot(v1, v2) / (norm(v1) * norm(v2))
+    return cosine
+
+```
+5. <h3>Result</h3>
+
+Last, after we saved the vector and create a cosine similarity function. Now we can embedding our question and get score to each data from our sqlite table.
+
+```
+import json
+query_embedding = query_embedding("What is my favorit food?")
+rows = query_vector_db()
+
+results = []
+for text, vec_str in rows:
+    vec = json.loads(vec_str)
+    score = cosine_similarity(query_embedding, vec)
+    results.append((text, score))
+
+# sort high → low
+results.sort(key=lambda x: x[1], reverse=True)
+
+for r in results:
+    print(r)
+```
+
+After we run the script, we gonna get the result as shown below. 
+
+```
+# Result
+('I love pizza', np.float64(0.5755272688448315))
+('Pizza is the most delicious food in the world', np.float64(0.5061165012328421))
+('Bicycle is a good transportation', np.float64(0.3346899516812231))
+```
+
+First and second result is greater than 0.5 and the third score is 0.3. If we put treshold for our result is 0.5 which quite tolerable distance, we got 2 data. 
 
 ## Conclusion
 
+This exploration has highlighted cosine similarity as a powerful and essential metric for determining the directional alignment of vectors, making it particularly effective in high-dimensional spaces like those used for natural language processing (NLP) and Large Language Models (LLMs).
+
+Key TakeawaysMetric Selection: 
+
++ While metrics like Euclidean Similarity and Jaccard Similarity serve useful roles, cosine similarity's focus on the angle between non-zero vectors makes it robust to magnitude differences, a crucial feature for comparing documents or word embeddings of varying lengths.
++ Semantic Search Foundation: The Hands-On example clearly demonstrates how cosine similarity enables semantic search. By transforming text into numerical vector embeddings using models like embeddinggemma, we move beyond simple lexical matching to retrieve data based on meaning or contextual similarity.
++ Practical Implementation: 
+
+    The step-by-step process of converting text, saving vectors to an SQLite database, and calculating the similarity score confirms the practical application of the formula:$$\text{Cosine Similarity} = \frac{A \cdot B}{||A|| \times ||B||}$$
+
++ Result Interpretation: 
+    
+    The resulting scores provide a quantifiable measure of relatedness, allowing systems to rank results (like the pizza-related sentences scoring higher) and apply thresholds for precise information retrieval.
+    
+In essence, cosine similarity is a cornerstone of modern data analysis and search mechanisms, transforming abstract data into quantifiable, comparable vectors to bridge the gap between human language and machine understanding.
+
+Lastly, you can check out my github repository to see more detail [here](https://github.com/zacky-dzacky/smart-receipt/tree/main/4_vectordb)
+
 ## Reference
 + [IBM - What is cosine similarity?](https://www.ibm.com/think/topics/cosine-similarity)
++ [GeeksForGeeks - How to calculate cosine similarity in python?](https://www.geeksforgeeks.org/python/how-to-calculate-cosine-similarity-in-python/)
