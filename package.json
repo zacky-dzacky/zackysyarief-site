@@ -12,7 +12,7 @@
     "prepare": "husky",
     "mdbook:build": "cd readme && mdbook build",
     "mdbook:serve": "cd readme && mdbook serve",
-    "mdbook:build-and-copy": "cd readme && mdbook build && node ../scripts/copy-mdbook-to-public.js"
+    "mdbook:build-and-copy": "bash ../scripts/setup-mdbook.sh && cd readme && mdbook build && node ../scripts/copy-mdbook-to-public.js"
   },
   "dependencies": {
     "@headlessui/react": "2.2.0",
