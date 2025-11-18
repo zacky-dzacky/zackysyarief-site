@@ -1,0 +1,48 @@
+name: Build and deploy mdBook to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      # Optional: set this secret (MDBOOK_CUSTOM_DOMAIN) in the repo to automatically
+      # write a CNAME file into the built book output. Leave blank to skip.
+      MDBOOK_CUSTOM_DOMAIN: ${{ secrets.MDBOOK_CUSTOM_DOMAIN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust (for cargo)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install mdBook
+        run: |
+          cargo install mdbook --locked || true
+
+      - name: Build mdBook
+        working-directory: readme
+        run: mdbook build
+
+      - name: Add CNAME if MDBOOK_CUSTOM_DOMAIN secret provided
+        if: env.MDBOOK_CUSTOM_DOMAIN != ''
+        run: echo "${{ env.MDBOOK_CUSTOM_DOMAIN }}" > readme/book/CNAME
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          publish_dir: ./readme/book
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}

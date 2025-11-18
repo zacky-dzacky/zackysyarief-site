@@ -5,11 +5,14 @@
   "scripts": {
     "start": "next dev",
     "dev": "cross-env INIT_CWD=$PWD next dev",
-    "build": "cross-env INIT_CWD=$PWD next build && cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/postbuild.mjs",
+  "build": "npm run mdbook:build-and-copy && cross-env INIT_CWD=$PWD next build && cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/postbuild.mjs",
     "serve": "next start",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "next lint --fix --dir pages --dir app --dir components --dir lib --dir layouts --dir scripts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "mdbook:build": "cd readme && mdbook build",
+    "mdbook:serve": "cd readme && mdbook serve",
+    "mdbook:build-and-copy": "cd readme && mdbook build && node ../scripts/copy-mdbook-to-public.js"
   },
   "dependencies": {
     "@headlessui/react": "2.2.0",

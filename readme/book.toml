@@ -1,0 +1,11 @@
+[book]
+authors = ["warungkode"]
+language = "en"
+src = "src"
+title = "wiki"
+
+[output.html]
+site-url = "/wiki/"
+
+# When serving the book under a subpath (e.g. example.com/wiki), set site-url
+# to the subpath so generated links and search index use the correct base.
