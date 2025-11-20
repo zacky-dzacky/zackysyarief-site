@@ -5,6 +5,8 @@
 # Artificial Intelligence 
 - [Books](ai/books.md)
 - [Journals](ai/journals.md)
+- [Videos](ai/videoss.md)
+- [Blogs](ai/blogs.md)
 - [Hallucination Reduction](ai/technique.md)
     - [Prompt Engineering](ai/technique/prompt-engineering.md)
     - [Fine Tuning](ai/technique/fine-tuning.md)
