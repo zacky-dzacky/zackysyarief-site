@@ -18,7 +18,3 @@
     - [LlamaIndex](ai/library/llamaindex.md)
     - [Pydantic](ai/library/pydantic.md)
     - [Model Context Protocol](ai/library/mcp.md)
-
-# Mobile Development 
-- [Security](android/security.md)
-- [Kotlin Multi Platform](android/kmp.md)

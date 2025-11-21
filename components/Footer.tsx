@@ -46,7 +46,12 @@ export default function Footer() {
             </div> */}
             <div>
               <Link className="inline-block cursor-pointer hover:underline" href="/wiki">
-                <p className="text-md text-slate-800 dark:text-slate-400">Wiki</p>
+                <p className="text-md text-slate-800 dark:text-slate-400">AI (Wiki)</p>
+              </Link>
+            </div>
+            <div>
+              <Link className="inline-block cursor-pointer hover:underline" href="/#">
+                <p className="text-md text-slate-800 dark:text-slate-400">Mobile (Wiki)</p>
               </Link>
             </div>
           </div>
