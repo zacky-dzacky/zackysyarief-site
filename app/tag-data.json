@@ -1,11 +1,11 @@
 {
-  "security": 3,
-  "android": 5,
   "ai": 3,
+  "rag": 1,
   "ai-agent": 1,
   "mcp": 1,
-  "rag": 1,
-  "kotlin": 2,
+  "security": 3,
+  "android": 5,
   "sofware-development": 1,
+  "kotlin": 2,
   "kotlin-multiplatform": 1
 }
