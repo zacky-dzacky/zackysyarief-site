@@ -20,12 +20,14 @@ export default function Home({ posts }) {
             </span>
           </h2>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            Here, I talk more about <b className="text-red-700">AI Engineering</b>.<br />
-            Focused on Generative AI, Fine-Tuning LLMs, and RAG-Powered Agents. <br />
-            As well as <b className="text-green-600">Android</b>, with a focus on{' '}
-            <b className="text-purple-500">Kotlin Multiplatform</b> and
-            <b className="text-black-500"> Android Security</b>. <br />I Speak{' '}
-            <b className="text-blue-500">Python, Java/Kotlin & Haskell</b> fluently.{' '}
+            <b className="text-black">Fullstack Engineer → AI Engineer.</b> Background in{' '}
+            <b className="text-blue-500">distributed systems</b>,{' '}
+            <b className="text-purple-500">event-driven architecture</b>, and{' '}
+            <b className="text-green-600">tech leadership</b>. Now focused on building intelligent
+            systems with <b className="text-black">LLMs</b> and{' '}
+            <b className="text-black">Generative AI</b>. This is where I share my{' '}
+            <b className="text-gray-700 dark:text-gray-300">writing and experimentation</b> along
+            the way.
           </p>
         </div>
       </div>
