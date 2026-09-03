@@ -8,10 +8,10 @@ interface Project {
 
 const projectsData: Project[] = [
   {
-    title: 'RAG using Ollama',
-    description: `A Retrieval-Augmented Generation (RAG) project that leverages the Ollama API to enhance language model responses with relevant information from a custom knowledge base.`,
+    title: 'Caridata',
+    description: `Ask questions about your own PDFs, with the models running on your own machine. Hybrid dense + SPLADE retrieval over Qdrant finds the relevant passages, a local Ollama model writes the answer, and every document stays scoped to the account that uploaded it.`,
     imgSrc: '/static/images/google.png',
-    href: 'https://github.com/zacky-dzacky/rag-ollama',
+    href: 'https://caridata.zackysyarief.com',
     tag: 'RAG',
   },
   {

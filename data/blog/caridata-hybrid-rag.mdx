@@ -1,0 +1,125 @@
+---
+title: 'Caridata: hybrid search RAG you can actually log into'
+date: '2026-09-03'
+lastmod: '2026-09-03'
+tags: ['AI', 'RAG']
+draft: false
+summary: 'A year ago I wrote about running an LLM locally with Ollama and a bit of RAG on top. That version was a script. This one is an app you can sign into: hybrid dense + SPLADE retrieval over Qdrant, a FastAPI backend, and documents that belong to whoever uploaded them.'
+images: ['/static/images/twitter-card.png']
+---
+
+Last year I wrote [Running LLM locally with Ollama + RAG](/blog/rag-using-ollama). It worked, but it was a script: one embedding model, one vector store, one user — me — and no way to use it without a terminal.
+
+I kept using it, and every limitation turned into a change. The result is **Caridata**, live at [caridata.zackysyarief.com](https://caridata.zackysyarief.com).
+
+Here is what moved:
+
+| | First version | Caridata |
+| --- | --- | --- |
+| Embedding model | `mxbai-embed-large` | `embeddinggemma` |
+| Retrieval | Dense only | Dense + SPLADE, fused with RRF |
+| Vector store | Chroma | Qdrant |
+| Interface | Python CLI | Web app + FastAPI |
+| Users | Just me | Google sign-in, per-user documents |
+
+This post is about why each of those changed.
+
+# Why dense-only retrieval was not enough
+
+Semantic search is very good at the thing it is good at. Ask "how do I roll back a deploy" and it will find a passage about reverting a release even though the words are different. That is the whole appeal.
+
+Where it falls down is exact tokens. Error codes. Version numbers. A product name that appears nowhere in the model's training data. Embed `ERR_CONN_2481` and you get a vector that means roughly "some error code" — close to every other error code in the document. The one chunk you actually wanted ranks fifth.
+
+Keyword search has the opposite problem and the opposite strength. So: use both.
+
+## Dense + SPLADE, fused with RRF
+
+Caridata runs two retrievers over the same query:
+
+- **Dense** — semantic similarity, using the Ollama embedding model.
+- **Sparse (SPLADE)** — a *learned* sparse model, [`prithivida/Splade_PP_en_v1`](https://huggingface.co/prithivida/Splade_PP_en_v1), run locally through `sentence-transformers`.
+
+SPLADE is the interesting half. It is keyword-aware like BM25, in that it produces a sparse vector over the vocabulary, but it is a neural model, so it also does term expansion: a document about "rollback" gets weight on "revert" and "undo" too. You get exact-token matching without exact-token brittleness. It needs no Ollama support — it runs as its own local model.
+
+The two ranked lists are then combined with **Reciprocal Rank Fusion**. RRF is refreshingly dumb: score each document by the sum of `1 / (k + rank)` across the lists it appears in, and sort by that. No score normalization, no tuning a blend weight between two systems whose scores are not on the same scale in the first place. A chunk that both retrievers rank highly wins; a chunk that only one of them loves can still get in.
+
+## Why Qdrant instead of Chroma
+
+Once retrieval is hybrid, the vector store has to hold both a dense and a sparse vector per chunk and search them together. [Qdrant](https://qdrant.tech/) supports that natively, self-hosted, in the free open-source build. Chroma's equivalent is Chroma Cloud only. That was the entire decision — it took one afternoon to swap.
+
+Qdrant also runs as a single container, which keeps local setup honest:
+
+```
+docker compose up -d
+```
+
+# From script to app
+
+The frontend (`web/`) is static and framework-free. The backend (`api.py`) is FastAPI. They are fully decoupled: the page just needs to be pointed at an API URL via `API_BASE` in `web/config.js`, so the API can live anywhere. No build step.
+
+```
+uvicorn api:app --reload --port 8000
+```
+
+The API surface is small on purpose:
+
+- `POST /api/search` — hybrid search only, no LLM call. Returns matching chunks with scores.
+- `POST /api/ask` — full RAG: retrieve, then generate an answer with `qwen2.5:7b`, with sources.
+- `POST /api/documents` — upload a PDF and index it. Re-uploading the same filename replaces both the file and its indexed chunks instead of duplicating them.
+- `GET /api/documents` — list your indexed sources with chunk counts.
+- `DELETE /api/documents?source=…` — drop one document's chunks from Qdrant.
+- `GET /health` — liveness, no auth, drives the status dot in the UI.
+
+Splitting `/api/search` from `/api/ask` turned out to be the most useful debugging decision in the project. When an answer is wrong, the first question is always *was the retrieval wrong, or was the generation wrong?* — and `/api/search` answers it directly, with no model in the way.
+
+The original CLI still exists as `query_ollama.py`. It runs the same retrieval and generation pipeline with no web layer and no auth, under a fixed local user id, which makes it a good place to poke at mechanics.
+
+# Multi-user without a service account
+
+The moment it is on the internet, "my documents" has to mean something. Two pieces:
+
+**Identity.** Firebase handles Google sign-in in the browser and hands the frontend an ID token. The backend verifies that token against Firebase's public keys — it only needs your Firebase **project ID**, which is not a secret. No service account JSON, no private key on the server, nothing to rotate or leak. The `firebaseConfig` values in the frontend are not secrets either; access is gated by the enabled sign-in provider and the authorized-domains list, not by hiding an API key.
+
+**Isolation.** Every point written to Qdrant carries a `user_id`, and every query — search, ask, list, delete — filters on it. There is no code path that reads a chunk without that filter. Uploaded files land under `data/pdf/<uid>/`.
+
+# Running it yourself
+
+Pull the two models:
+
+```
+ollama pull embeddinggemma
+ollama pull qwen2.5:7b
+```
+
+Then Qdrant and the Python dependencies:
+
+```
+docker compose up -d
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+One macOS trap worth knowing about, because the error message is unhelpful:
+
+```
+OMP: Error #15: Initializing libomp.dylib, but found libomp.dylib already initialized
+```
+
+This is torch and numpy/scikit-learn each bundling their own OpenMP runtime. `splade.py` already works around it by setting `KMP_DUPLICATE_LIB_OK=TRUE` and pinning torch to a single thread, but if you hit it elsewhere, that is what it is.
+
+## Before you put it on the internet
+
+The defaults are tuned for local development, which means several of them are wrong for a public deploy:
+
+- **Lock down CORS.** `ALLOWED_ORIGINS` defaults to `*`. Set it to your actual frontend origin.
+- **Terminate TLS in front of the API.** nginx or Caddy — do not expose `uvicorn` directly over plain HTTP.
+- **Do not expose Qdrant or Ollama.** Both should be bound to localhost or an internal network, reachable only by the API.
+- **Add your domain to Firebase's authorized domains.** Sign-in fails silently-ish from a domain that is not listed, and it is an easy one to forget.
+- **Drop `--reload`** and run under a process manager so it restarts on crash and on deploy.
+
+# Try it
+
+The app is at **[caridata.zackysyarief.com](https://caridata.zackysyarief.com)** — sign in with Google, upload a PDF, ask it something. Source is on [GitHub](https://github.com/zacky-dzacky/rag-ollama).
+
+If you are starting from zero, the [earlier post](/blog/rag-using-ollama) still covers the fundamentals of Ollama and RAG better than this one does. This is the sequel, not the introduction.
