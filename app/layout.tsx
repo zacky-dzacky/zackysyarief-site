@@ -4,6 +4,7 @@ import 'remark-github-blockquote-alert/alert.css'
 
 import { Space_Grotesk } from 'next/font/google'
 import { Analytics, AnalyticsConfig } from 'pliny/analytics'
+import { Analytics as VercelAnalytics } from '@vercel/analytics/next'
 import { SearchConfig } from 'pliny/search'
 import { SearchProviderWrapper } from './search-provider-wrapper'
 import Header from '@/components/Header'
@@ -98,6 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
+          <VercelAnalytics />
           <SectionContainer>
             <SearchProviderWrapper searchConfig={siteMetadata.search as SearchConfig}>
               {/* <Header /> */}
