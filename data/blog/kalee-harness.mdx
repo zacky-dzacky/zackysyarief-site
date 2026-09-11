@@ -1,0 +1,155 @@
+---
+title: 'Kalee Harness: learning what an agent harness is by building one'
+date: '2026-09-12'
+lastmod: '2026-09-12'
+tags: ['AI', 'AI-Agent']
+draft: false
+summary: 'I use agent harnesses every day and could not have told you what is inside one. So I built one. Kalee Harness is model-agnostic, written in TypeScript on Bun, and does exactly one thing: code review. This is why that one thing, and what building it taught me about the layers underneath.'
+images: ['/static/images/twitter-card.png']
+---
+
+I use agent harnesses every day. Until recently I could not have told you what is actually inside one — where the agent loop ends and the provider adapter begins, what a "sub-agent" costs, why some of them fall apart the moment you point them at a local model.
+
+The fastest way to find out what a thing is made of is to build one. So I did. **Kalee Harness** is model-agnostic, written in TypeScript on Bun, and ships with exactly one capability: code review.
+
+The single capability is the interesting decision, so let me start there.
+
+# Why code review, and why only code review
+
+A harness with ten half-finished capabilities teaches you nothing. Every layer ends up decorative — an agent loop that only ever runs one turn, an orchestration layer that orchestrates nothing, a permission system with no tool dangerous enough to need it.
+
+Code review was chosen because it is demanding in exactly two useful directions and forgiving everywhere else:
+
+- It needs **only read-only tools**. Reading files, listing a diff, running `git`. That makes the sandbox layer trivially safe to get right, because there is nothing to get wrong. There is no edit tool anywhere in the harness. `bash` is the only tool that is not read-only.
+- It needs **multi-pass orchestration**. A review that is one model call is a bad review. Doing it properly forces the agent loop, sub-agent handoff, and per-role model routing to be real rather than aspirational.
+
+So the sandbox is easy and the orchestration is hard, which is the right way round when what you are actually trying to learn is orchestration.
+
+# Two passes, and the second one is the point
+
+The review runs in two stages.
+
+**Scan** runs the agent loop over the diff with read-only tools and reports candidate findings through a schema that _requires_ a concrete failure scenario — specific inputs that lead to a specific wrong result. If a claim cannot name them, it is not a finding. This alone removes most of what makes automated review tiresome: the vague "consider extracting this" commentary that is never wrong and never useful.
+
+**Verify** re-checks each candidate in a fresh, isolated context, asking one question: here is the claim, read the actual code, does it hold? Verdicts are `confirmed`, `plausible`, or `rejected`. Rejected findings are dropped before you ever see them.
+
+The verify pass is the single biggest precision lever in the project. It works because the context is genuinely fresh — the verifier has not seen the reasoning that produced the claim, so it cannot be talked into it. And because the pass is isolated, it can run on a _different model_:
+
+```yaml
+# models.yaml
+roles:
+  scan: opus-5
+  verify: haiku-4-5
+```
+
+A strong model to find things, a cheap one to check them. That split fell out of the architecture rather than being designed in, and it is the feature I use most.
+
+Output looks like this:
+
+```
+2 findings — main...HEAD
+
+high correctness  ✓ confirmed
+src/session/store.ts:142
+  `lastPageIndex` returns -1 for an empty collection, so the loop below never runs.
+  When a user has no sessions, summarize() returns an empty string instead of
+  "0 sessions", and the caller renders a blank panel.
+
+────────────────────────────────────────────────────────────
+opus-5 → haiku-4-5 · 24.1k in / 1.8k out (18.2k cached) · $0.0412 · 31.4s
+```
+
+The cost line is not decoration. Knowing a review cost four cents is what makes it reasonable to run one on every push.
+
+`kalee review` exits non-zero when any finding is confirmed, so CI can gate on it directly:
+
+```yaml
+- run: kalee review --base ${{ github.base_ref }} --format markdown >> $GITHUB_STEP_SUMMARY
+```
+
+# The conformance suite came first, deliberately
+
+The thing I would most recommend to anyone building something similar: I wrote the provider conformance suite at milestone 1, not at the end.
+
+It is one battery that every model adapter must pass. Streams text deltas. Emits a well-formed tool call. Round-trips a tool result. Reports usage. Surfaces errors as typed failures. Drops reasoning blocks from a different model. Survives an SSE frame split mid-JSON. It runs offline against a local server that speaks all three wire formats, so it exercises real adapter code rather than a mock.
+
+Writing it first is what makes a third and fourth provider cheap. Retrofitting that abstraction later is the standard way this design fails — you discover the shape of the interface only after three adapters have already grown their own quirks. It earned its keep immediately by catching a tool-name doubling bug in the OpenAI adapter.
+
+The same instinct shows up in the type system. `tsc --noEmit` is part of the test suite rather than a lint, because every `switch` over the intermediate representation's `Block` and `Event` unions ends in `assertNever`. Adding a variant fails compilation in _every_ adapter, rather than silently no-oping in the one you forgot.
+
+# Making local models actually work
+
+"Model-agnostic" is easy to claim and easy to fake. The OpenAI adapter plus a `baseURL` override covers Ollama, MLX, LM Studio, vLLM, llama.cpp, OpenRouter, Groq, Together, DeepSeek, Mistral and xAI, so a local review is just a registry entry:
+
+```yaml
+- id: local-qwen7b
+  provider: openai
+  baseURL: http://localhost:11434/v1 # Ollama
+  apiModel: qwen2.5:7b
+  pricing: { input: 0, output: 0 }
+  caps: { nativeToolCalls: true, maxContext: 32768 }
+```
+
+Three things had to be true before that was real rather than aspirational.
+
+**Capabilities are probed, not declared.** They vary per _model_, not per provider — two models behind the same Ollama endpoint can disagree about tool calling. `kalee doctor <id>` runs a short battery against a backend and writes what it actually found back into `models.yaml`.
+
+**Models without native tool calling still work.** Many local models describe a tool call in prose instead of emitting structured `tool_calls`. With `mlx_lm.server` this depends entirely on the model's chat template. Set `nativeToolCalls: false` and a shim renders the schemas into the system prompt, parses the text stream for them — buffering across chunk boundaries, so a tag split mid-token does not leak into visible output — and emits real tool-call events. The agent loop cannot tell the difference.
+
+**Small context windows degrade instead of failing.** A 60k-token diff does not fit a 32k model, so the scan pass splits into per-file passes rather than erroring.
+
+# The session came later
+
+The first version was one-shot only. The interactive session arrived a day after v1, and it changed how I use the thing entirely:
+
+```
+$ kalee
+
+  Kalee · opus-5 · ~/kalee-harness (main)
+
+› /review --base main
+  2 findings — main...HEAD
+  high correctness  ✓ confirmed
+  src/session/store.ts:142
+    `lastPageIndex` returns -1 for an empty collection, so the loop never runs.
+
+› why does that return -1?
+  `findLastIndex` returns -1 when nothing matches, and `store.ts:138` passes that
+  straight through instead of clamping it…
+```
+
+The follow-up question is the whole point. Three things make this more than a loop around a single call:
+
+**Findings become context.** `/review` runs the real pipeline in a forked session — it needs its own review identity and must not inherit the chat — but hands its findings back to the conversation. "Why is that one wrong?" is answerable without re-running anything.
+
+**The prefix is cached across turns.** Identity, skills manifest and repo map are built once and marked stable, so every turn after the first reads them from the provider's cache. In the run above, 18.2k of 24.1k input tokens were cached. Asking about a finding costs a fraction of the review that produced it.
+
+**It compacts before it overflows.** Above 70% of the model's context window, older turns are summarized and the conversation continues in a fresh session. That is the difference between a 32k local model being usable and it erroring out three exchanges in.
+
+# Treating prompt edits as falsifiable
+
+The failure mode I was most worried about is the one where a harness quietly gets worse. You tweak a prompt, it feels better, and you have no way to know.
+
+So: `kalee eval run` scores recall and precision against a fixture set, and a drop is treated as a failing build. Two of the eight fixtures are **clean diffs that must produce zero findings**, because a reviewer that flags everything scores perfect recall and is useless. `kalee eval sweep` runs the same fixtures across backends, which turns "which model should I use" into a quality-per-dollar number instead of a vibe.
+
+Without this, prompt edits are unfalsifiable. With it, they are just changes that either pass or do not.
+
+# What I actually learned
+
+The layering I ended up with — identity and behaviour, then runtime (sandbox, tools, context, orchestration, adaptation, verification, observability), then governance — is not something I designed up front. It is what fell out of building one capability all the way down and noticing where the seams wanted to be.
+
+The parts I expected to be hard were mostly mechanical. The parts that turned out to matter were the boring ones: a conformance suite written early, a type system that refuses to let you forget an adapter, and an eval harness that makes prompt changes falsifiable.
+
+# Try it
+
+Source is on [GitHub](https://github.com/zacky-dzacky/kalee-harness). You need [Bun](https://bun.sh):
+
+```sh
+git clone https://github.com/zacky-dzacky/kalee-harness.git
+cd kalee-harness
+./scripts/install.sh
+export ANTHROPIC_API_KEY=...    # or point a role at a local model and need no key
+kalee review --base main
+```
+
+`KALEE.md` holds the conventions for working in the codebase and doubles as the identity overlay the agent reads at run time. `LAYERS.md` is the architecture. `PLAN.md` is what I thought I was building before I built it, which is its own kind of interesting.
