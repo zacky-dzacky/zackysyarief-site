@@ -22,12 +22,12 @@ const projectsData: Project[] = [
     tag: 'MCP',
   },
   {
-    title: '[Draft] Kalee',
-    description: `Kalee is an android tool to make device binding process on android smooth and easy to manage.`,
+    title: 'Kalee Harness',
+    description: `A model-agnostic agent harness built around a single capability: code review. Findings come out of a multi-pass scan-then-verify loop over read-only tools, each one labelled by severity and whether it was confirmed or is merely plausible, with token and cost accounting printed per run. TypeScript on Bun, installable as a standalone binary.`,
     imgSrc: '/static/images/google.png',
-    href: 'https://github.com/zacky-dzacky/kalee',
-    tag: 'Android'
-  }
+    href: 'https://github.com/zacky-dzacky/kalee-harness',
+    tag: 'Agents',
+  },
 ]
 
 export default projectsData
