@@ -1,12 +1,14 @@
 {
+  "ai": 7,
+  "ai-agent": 3,
+  "research": 1,
+  "software-engineering": 1,
+  "rag": 3,
+  "slm": 1,
+  "mcp": 1,
   "security": 3,
   "android": 5,
-  "ai": 6,
-  "rag": 3,
-  "ai-agent": 2,
-  "mcp": 1,
-  "slm": 1,
-  "kotlin": 2,
   "sofware-development": 1,
+  "kotlin": 2,
   "kotlin-multiplatform": 1
 }
