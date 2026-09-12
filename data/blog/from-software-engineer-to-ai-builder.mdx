@@ -1,0 +1,116 @@
+---
+title: 'From software engineer to AI builder: what actually transferred'
+date: '2026-09-17'
+lastmod: '2026-09-17'
+tags: ['AI', 'Career']
+draft: true
+summary: 'I asked for the move into AI. Ten years of software engineering did not look like AI experience on paper, and most of it turned out to be the part that mattered. This is what carried over, what broke, and what replaced it.'
+images: ['/static/images/twitter-card.png']
+---
+
+I asked for the job. Nobody moved me into AI — I made the case for it, and then had to be worth the case I had made.
+
+The first real test was a demo. A question that took a person roughly an hour to answer by hand — find the document, read it, find the relevant clause, write the answer — came back in minutes, against the bank's own internal data. Watching stakeholders react to that is the moment the work stopped being an experiment I was running and became something people expected to keep working.
+
+Between asking for the job and that demo, I had to find out how much of ten years as a software engineer was going to be useful. The answer surprised me in both directions.
+
+# The ten years that did not look like AI experience
+
+My background reads as a detour if you are looking for a machine learning CV:
+
+| Period | What I was actually doing |
+| --- | --- |
+| 2015–2018 | Full-stack — React frontend, Flask/MySQL/Redis/SQLAlchemy API, shipping to two app stores |
+| 2019–2022 | React and React Native, component and state architecture |
+| 2022–2023 | Senior Android — modular architecture, Java-to-Kotlin migration, TDD across the team |
+| 2023–2024 | Android NDK in C/C++, hardening a banking app against reverse engineering |
+| 2024 | Leading a combined backend and frontend team — Jenkins CI/CD, Kotlin Multiplatform, Spring Boot and microservices |
+
+No papers. No Kaggle. No PyTorch until much later.
+
+What I did have was ten years of putting things in front of users and keeping them running. And it turns out that an AI product is mostly not the model. Caridata — the RAG app I ended up building — is a retrieval pipeline, yes, but it is also file upload, background indexing, a job store, token verification, per-user data isolation, a container setup, CORS configuration, and a deploy that does not fall over. The model is one call in the middle of all of that.
+
+The people who struggle with this transition are rarely struggling with the model. They are struggling with everything around it. If you have spent a decade on everything around it, you are closer than your CV suggests.
+
+Here is what carried over more or less intact:
+
+- **Knowing where the boundaries go.** Splitting Caridata's API into `/api/search` and `/api/ask` was the most useful debugging decision in the project, and it is a plain interface-design instinct. When an answer is wrong, you need to know whether retrieval failed or generation failed, and a boundary in the right place answers that with no model in the way.
+- **Backend fundamentals.** Multi-minute indexing does not belong on the request path. That is not an AI insight; it is the same thing you learn the first time a synchronous job times out. It became a background worker, a job store, HTTP 202, and a polling endpoint.
+- **CI/CD and containers.** The gap between "it works on my machine" and "it runs in production" is identical whether the thing in the middle is a Spring Boot service or an inference server.
+- **Security thinking.** Years of hardening a banking client made "who can read this?" a reflex. In a RAG system that reflex becomes a `user_id` filter on every single query, list, and delete, with no code path that skips it.
+
+# The one instinct that broke
+
+Then there is the part that does not transfer, and for me it was a single thing: **non-determinism**.
+
+Every debugging instinct I had was built on the same assumption — the same input produces the same output, and when it does not, something specific is wrong and can be found. Set a breakpoint. Read the stack trace. Bisect the commit history. Ten years of that.
+
+None of it works here. The same question can return a good answer and then a worse one. There is no stack trace. There is no line to break on. The failure is not in a branch you can step into; it is distributed across a retrieval ranking, a chunk boundary, a prompt, and a sampling temperature, and any of them might be the problem.
+
+The first version of this that really got me was a retrieval that returned the wrong passage with complete confidence. Nothing crashed. Nothing logged an error. The system did exactly what it was built to do and the answer was still wrong. Coming from a world where "no error" means "working", that is genuinely disorienting.
+
+# What replaced the debugger
+
+The thing that got me out of it was not new. It was the oldest discipline I had, moved up one level.
+
+At Indodax I had pushed TDD across the team and roughly halved our bug count and development time. At Maybank I built a framework for turning BDD specifications into concrete, estimable engineering tasks. Both are the same underlying belief: **do not trust a change you cannot verify.**
+
+That belief works perfectly well in a probabilistic system. You just cannot express it as a unit test any more.
+
+So when I moved Caridata's retrieval from dense-only ChromaDB to hybrid dense + SPLADE on Qdrant, I did not ship it because it felt better. I wrote a side-by-side harness that runs both pipelines under an identical generative model, so the only variable is retrieval. That isolates the gain instead of guessing at it. It is A/B testing, which every product engineer already understands, pointed at a component instead of a UI.
+
+Kalee Harness — the agent harness I built afterwards — takes the same idea further. It scores recall and precision against fixed test cases, and a drop is treated as a failing build. Two of the fixtures are clean diffs that must produce **zero** findings, because a reviewer that flags everything scores perfect recall and is useless.
+
+Without that, prompt edits are unfalsifiable. You change a line, it feels sharper, and you have learned nothing. This is the normal way a system like this quietly gets worse, and it is invisible while it happens.
+
+Non-determinism does not mean you cannot know whether you improved something. It means you have to measure across many runs instead of reading one. The engineering discipline is unchanged. Only the instrument is different.
+
+# The writing lagged the job by ten months
+
+Here is the honest part of the timeline.
+
+My title changed in November 2024. My blog did not notice until September 2025. Look at what I was publishing in the middle of that:
+
+```
+2025-07-28  Why Kotlin Multiplatform is a Game-Changer
+2025-08-02  OWASP: Things Android Developers should know
+2025-08-11  Functional or OOP — Kotlin has both
+2025-08-12  Why Adding More Developers Doesn't Shorten Your Timeline
+2025-08-15  9 Strategies to Counter Android Reverse Engineering
+2025-08-26  Device Binding on Android
+─────────────────────────────────────────────────────────────
+2025-09-01  Running LLM locally with Ollama + RAG
+2025-09-16  How to calculate and estimate GPU usage
+2025-10-06  Connect MCP Server using Google ADK
+2025-11-14  Vectors and cosine similarity from scratch
+2026-09-03  Caridata: hybrid search RAG you can actually log into
+2026-09-12  Kalee Harness: learning what an agent harness is by building one
+```
+
+Six posts about mobile and engineering craft, written while I was already employed to do AI. I was not being dishonest. I simply did not yet feel qualified to write about the new thing, so I kept writing about the old one.
+
+If you are somewhere in that gap right now, I would say two things. First, it is normal — identity lags the job title, and the lag is not evidence you are a fraud. Second, publishing before you feel ready is what closes it. That September post is not sophisticated. It is a script with one embedding model, one vector store, and one user. It was still the thing that made me start thinking of myself as someone who does this.
+
+The order of that list also happens to be a decent curriculum, and it was not planned: run a model locally, work out what it costs to run, connect it to tools, then implement the underlying math by hand. The cosine similarity post is the one I would defend hardest. I wrote it because I was tired of treating `sentence-transformers` as magic. Implementing the thing yourself once is worth a great deal of reading about it.
+
+# Engineer, builder
+
+The distinction I care about now is between engineering the model part and shipping the whole product.
+
+Caridata is not a retrieval experiment. It is something you can sign into, upload a document to, and get an answer from, with your documents scoped to you and the model running on hardware I control. Getting there meant Firebase token verification, per-user isolation in the vector store, idempotent re-indexing, a background worker, Docker, a deploy, and a list of things to lock down before it faced the internet. The retrieval quality was maybe a fifth of the work.
+
+Kalee Harness went one layer further down — instead of using an agent harness I built one, model-agnostic across hosted APIs and local backends, to find out what is actually inside the tools I had been relying on daily.
+
+That is what I mean by builder rather than engineer. Not a claim about seniority. A claim about scope: **owning the whole path a thing takes to reach a person**, and being unwilling to hand off the parts that are not the interesting AI bit, because those parts are most of it.
+
+Ten years of frontend, mobile, backend, and CI/CD is what makes that scope possible. It never looked like AI experience. It was the qualification.
+
+# If you are a software engineer thinking about this
+
+- **Your fundamentals are the moat, not the gap.** Deployment, boundaries, testing, security, observability — most AI failures in production are ordinary engineering failures. You already know how to fix those.
+- **Learn the math once, by hand.** Not to a research standard. Enough to stop treating the library as a black box. One from-scratch implementation of embeddings and cosine similarity changed how I reasoned about every retrieval problem afterwards.
+- **Replace your tests with evals immediately.** Not eventually. The moment you cannot tell whether a change made things better, you have stopped engineering and started guessing.
+- **Ask for the work.** I did not get moved into this. I argued for it, and then had roughly a year of quietly not being sure I could do it. That part is survivable.
+- **Publish before you feel ready.** The gap between doing the work and claiming the work is closed by writing, not by waiting.
+
+If you want the technical detail behind any of this, [Caridata](/blog/caridata-hybrid-rag) covers the retrieval architecture and [Kalee Harness](/blog/kalee-harness) covers the agent side. The [first post](/blog/rag-using-ollama) is still the best starting point if you have not run a model locally yet — and it is deliberately the least impressive thing here.
