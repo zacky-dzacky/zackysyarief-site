@@ -1,0 +1,353 @@
+---
+title: 'Six AI research trends from 2026, read as a software engineer'
+date: '2026-09-12'
+lastmod: '2026-09-12'
+tags: ['AI', 'AI-Agent', 'research', 'software-engineering']
+draft: false
+summary: 'I read through the ICML 2026 program, a summer of arXiv agent papers, and three developer surveys to answer one question: what actually changed for people who ship software? Six trends, the numbers behind them, and what I am doing about each one.'
+images: ['/static/images/twitter-card.png']
+---
+
+Every few months I try to look up from the tools I use daily and ask what the research is actually saying. This time I went through the ICML 2026 program, the agent papers that landed on arXiv between May and August, the JetBrains and Pragmatic Engineer developer surveys, METR's time-horizon update, and a handful of security studies.
+
+I am not a researcher. I lead a mobile team at a bank and build RAG and agent things on the side ([Caridata](/blog/caridata-hybrid-rag), [Kalee Harness](/blog/kalee-harness), [MCP with Google ADK](/blog/connect-mcp-using-google-adk)). So this is a working engineer's read, filtered through that experience. Where a number comes from a vendor report rather than a peer-reviewed paper, I say so.
+
+Six trends came out of it. Here they are at a glance, then one section each.
+
+| # | Trend | Strongest evidence | What it changes for me |
+| --- | --- | --- | --- |
+| 1 | The job is becoming orchestration, and the delegation gap is the problem | 90% of devs use agents weekly; only 0–20% of tasks fully delegated; METR horizons doubling every ~3–4 months | How I split work, not which model I pick |
+| 2 | Verification, not generation, is the bottleneck | Verification Horizon paper; Veracode secure-output rate flat at 55% | Where I invest: tests, monitors, verifiers |
+| 3 | Leaderboards are being replaced by trajectory evaluation | AgentAtlas; "Coding benchmarks are misaligned" position paper | How I pick and trust a model |
+| 4 | Context engineering and memory are the real design surface | Memory-as-Action, InfiAgent, SWE-ContextBench | How I structure repos and agent sessions |
+| 5 | The attack surface moved into the tool result | MCP tool poisoning; PR-title injection that leaked CI secrets | How I sandbox and permission agents |
+| 6 | Small models on the edge are now a real workload | Gemma "E" models, Qwen 0.8B–9B, ~1 GB 4B models on phones | What I can ship inside a mobile app |
+
+# 1. Orchestration is the job now, and the delegation gap is the problem
+
+The adoption numbers stopped being interesting because they are no longer in doubt. JetBrains surveyed more than 15,000 professional developers between May and July 2026: 90% use AI coding agents at work at least weekly, 68% daily. Claude Code went from 18% workplace adoption in January to 39% by mid-year. The Pragmatic Engineer survey (906 respondents, early 2026) found that 55% regularly use agents and that Staff+ engineers use them more than anyone else, at 63.5%.
+
+<div className="my-6">
+<svg viewBox="0 0 640 300" role="img" aria-label="Workplace adoption of agentic coding tools, 2026 (JetBrains, n = 15,000+)" style={{maxWidth:"100%",height:"auto",fontFamily:"inherit"}}>
+<text x="44" y="18" fontSize="14" fontWeight="600" fill="currentColor">Workplace adoption of agentic coding tools, 2026 (JetBrains, n = 15,000+)</text>
+<rect x="44" y="27" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="58" y="36" fontSize="11" fill="currentColor" fillOpacity="0.75">Jan 2026</text>
+<rect x="132" y="27" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="146" y="36" fontSize="11" fill="currentColor" fillOpacity="0.75">May–Jul 2026</text>
+<line x1="44" y1="218.0" x2="624" y2="218.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="222.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">0%</text>
+<line x1="44" y1="183.2" x2="624" y2="183.2" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="187.2" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">10%</text>
+<line x1="44" y1="148.4" x2="624" y2="148.4" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="152.4" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">20%</text>
+<line x1="44" y1="113.6" x2="624" y2="113.6" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="117.6" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">30%</text>
+<line x1="44" y1="78.8" x2="624" y2="78.8" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="82.8" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">40%</text>
+<line x1="44" y1="44.0" x2="624" y2="44.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="48.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">50%</text>
+<rect x="79.5" y="155.4" width="36.0" height="62.6" rx="4" fill="#2a78d6"/>
+<rect x="79.5" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="97.5" y="150.4" fontSize="11" textAnchor="middle" fill="currentColor">18%</text>
+<rect x="117.5" y="82.3" width="36.0" height="135.7" rx="4" fill="#eb6834"/>
+<rect x="117.5" y="214.0" width="36.0" height="4" fill="#eb6834"/>
+<text x="135.5" y="77.3" fontSize="11" textAnchor="middle" fill="currentColor">39%</text>
+<text x="116.5" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">Claude Code</text>
+<rect x="224.5" y="117.1" width="36.0" height="100.9" rx="4" fill="#2a78d6"/>
+<rect x="224.5" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="242.5" y="112.1" fontSize="11" textAnchor="middle" fill="currentColor">29%</text>
+<rect x="262.5" y="144.9" width="36.0" height="73.1" rx="4" fill="#eb6834"/>
+<rect x="262.5" y="214.0" width="36.0" height="4" fill="#eb6834"/>
+<text x="280.5" y="139.9" fontSize="11" textAnchor="middle" fill="currentColor">21%</text>
+<text x="261.5" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">GitHub Copilot</text>
+<rect x="369.5" y="207.6" width="36.0" height="10.4" rx="4" fill="#2a78d6"/>
+<rect x="369.5" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="387.5" y="202.6" fontSize="11" textAnchor="middle" fill="currentColor">3%</text>
+<rect x="407.5" y="162.3" width="36.0" height="55.7" rx="4" fill="#eb6834"/>
+<rect x="407.5" y="214.0" width="36.0" height="4" fill="#eb6834"/>
+<text x="425.5" y="157.3" fontSize="11" textAnchor="middle" fill="currentColor">16%</text>
+<text x="406.5" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">Codex</text>
+<rect x="514.5" y="155.4" width="36.0" height="62.6" rx="4" fill="#2a78d6"/>
+<rect x="514.5" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="532.5" y="150.4" fontSize="11" textAnchor="middle" fill="currentColor">18%</text>
+<rect x="552.5" y="176.2" width="36.0" height="41.8" rx="4" fill="#eb6834"/>
+<rect x="552.5" y="214.0" width="36.0" height="4" fill="#eb6834"/>
+<text x="570.5" y="171.2" fontSize="11" textAnchor="middle" fill="currentColor">12%</text>
+<text x="551.5" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">Cursor</text>
+<line x1="44" y1="218" x2="624" y2="218" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1"/>
+<text x="44" y="292" fontSize="10" fill="currentColor" fillOpacity="0.55">Source: JetBrains Developer Ecosystem Survey 2026. Copilot Jan value is year-over-year.</text>
+</svg>
+</div>
+
+The number that *is* interesting comes from Anthropic's 2026 Agentic Coding Trends Report. Developers say AI is involved in roughly 60% of their work, but they can *fully delegate* only 0–20% of tasks. Agents now run around 20 autonomous actions before needing a human, double what they did six months earlier. That gap between "AI touches it" and "AI owns it" is what the report calls the delegation gap.
+
+<div className="my-6">
+<svg viewBox="0 0 640 300" role="img" aria-label="The delegation gap: AI touches most work, little is handed off fully" style={{maxWidth:"100%",height:"auto",fontFamily:"inherit"}}>
+<text x="44" y="18" fontSize="14" fontWeight="600" fill="currentColor">The delegation gap: AI touches most work, little is handed off fully</text>
+<rect x="44" y="27" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="58" y="36" fontSize="11" fill="currentColor" fillOpacity="0.75">Reported by developers</text>
+<line x1="44" y1="218.0" x2="624" y2="218.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="222.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">0%</text>
+<line x1="44" y1="174.5" x2="624" y2="174.5" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="178.5" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">25%</text>
+<line x1="44" y1="131.0" x2="624" y2="131.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="135.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">50%</text>
+<line x1="44" y1="87.5" x2="624" y2="87.5" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="91.5" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">75%</text>
+<line x1="44" y1="44.0" x2="624" y2="44.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="48.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">100%</text>
+<rect x="171.0" y="113.6" width="36.0" height="104.4" rx="4" fill="#2a78d6"/>
+<rect x="171.0" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="189.0" y="108.6" fontSize="11" textAnchor="middle" fill="currentColor">60%</text>
+<text x="189.0" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">Share of work done with AI</text>
+<rect x="461.0" y="183.2" width="36.0" height="34.8" rx="4" fill="#2a78d6"/>
+<rect x="461.0" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="479.0" y="178.2" fontSize="11" textAnchor="middle" fill="currentColor">20%</text>
+<text x="479.0" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">Share of tasks fully delegated</text>
+<line x1="44" y1="218" x2="624" y2="218" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1"/>
+<text x="44" y="292" fontSize="10" fill="currentColor" fillOpacity="0.55">Sources: Anthropic 2026 Agentic Coding Trends Report (~60%; 0–20% range, upper bound shown).</text>
+</svg>
+</div>
+
+Meanwhile, METR's Time Horizon 1.1 update shows the length of task an agent can finish with 50% reliability doubling every ~4 months since 2024, and closer to every 3 months for the latest models. The top model they measured sits at roughly 16–20 hours, and they explicitly warn that anything above 16 hours is unreliable because their task suite is saturating.
+
+<div className="my-6">
+<svg viewBox="0 0 640 300" role="img" aria-label="METR: months for agent task horizon to double" style={{maxWidth:"100%",height:"auto",fontFamily:"inherit"}}>
+<text x="44" y="18" fontSize="14" fontWeight="600" fill="currentColor">METR: months for agent task horizon to double</text>
+<rect x="44" y="27" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="58" y="36" fontSize="11" fill="currentColor" fillOpacity="0.75">Doubling time (months)</text>
+<line x1="44" y1="218.0" x2="624" y2="218.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="222.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">0</text>
+<line x1="44" y1="174.5" x2="624" y2="174.5" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="178.5" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">2</text>
+<line x1="44" y1="131.0" x2="624" y2="131.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="135.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">4</text>
+<line x1="44" y1="87.5" x2="624" y2="87.5" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="91.5" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">6</text>
+<line x1="44" y1="44.0" x2="624" y2="44.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="48.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">8</text>
+<rect x="122.7" y="65.8" width="36.0" height="152.2" rx="4" fill="#2a78d6"/>
+<rect x="122.7" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="140.7" y="60.8" fontSize="11" textAnchor="middle" fill="currentColor">7</text>
+<text x="140.7" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">2019–2024</text>
+<rect x="316.0" y="124.5" width="36.0" height="93.5" rx="4" fill="#2a78d6"/>
+<rect x="316.0" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="334.0" y="119.5" fontSize="11" textAnchor="middle" fill="currentColor">4.3</text>
+<text x="334.0" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">2023 onward</text>
+<rect x="509.3" y="152.8" width="36.0" height="65.2" rx="4" fill="#2a78d6"/>
+<rect x="509.3" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="527.3" y="147.8" fontSize="11" textAnchor="middle" fill="currentColor">3</text>
+<text x="527.3" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">2024 onward</text>
+<line x1="44" y1="218" x2="624" y2="218" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1"/>
+<text x="44" y="292" fontSize="10" fill="currentColor" fillOpacity="0.55">Source: METR Time Horizon 1.1 (Jan 2026). Estimates above ~16h are flagged unreliable.</text>
+</svg>
+</div>
+
+**My read.** Agent capability is now measured in workdays and my review capacity is still measured in minutes. That mismatch is the delegation gap. It is not a model problem. It is a task-decomposition problem, and I have written about that before, from the human side, in [why adding more developers doesn't shorten your timeline](/blog/sofware-development-timeline-factors). Brooks's law applies to agents too: the cost of a parallel worker is the coordination overhead it creates for whoever integrates the output. Anthropic's own multi-agent research system is the canonical case study here: a lead agent decomposes the job, specialist sub-agents work in parallel on a shared filesystem, and results flow back to one context that owns the merge. When I built Kalee Harness, the sub-agent handoff was the single hardest layer to get right, and for exactly this reason.
+
+**What I am doing.**
+
+- Classifying tasks by *verifiability* before delegating them, not by difficulty. A hard task with a good test suite is more delegable than an easy task with none.
+- Measuring my own delegation rate. If I cannot say what fraction of last week's tickets an agent finished unattended, I cannot improve it.
+- Writing task specs as if for a new joiner, with acceptance criteria, because that is what an orchestrator does.
+
+# 2. Verification, not generation, is the bottleneck
+
+Two very different sources landed on the same conclusion this year.
+
+The first is a training paper, *The Verification Horizon* (arXiv 2606.26300). Its claim: for coding agents, generating candidate solutions is no longer the hard part. Reliably verifying them is. No static reward function survives contact with a stronger policy, because the policy finds the loophole. Their fix is to make verifiers co-evolve: behaviour monitors, quality judges, and interactive evaluators layered on top of unit tests. On software-engineering tasks, adding a behaviour monitor cut exploitative solutions from 29% to 1%, and monitoring plus filtering raised clean task success from 40% to 61%. Their conclusion is the one to remember: *every verifier is only a proxy for human intent.*
+
+<div className="my-6">
+<svg viewBox="0 0 640 300" role="img" aria-label="Verification Horizon: adding monitors and filters to the reward loop" style={{maxWidth:"100%",height:"auto",fontFamily:"inherit"}}>
+<text x="44" y="18" fontSize="14" fontWeight="600" fill="currentColor">Verification Horizon: adding monitors and filters to the reward loop</text>
+<rect x="44" y="27" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="58" y="36" fontSize="11" fill="currentColor" fillOpacity="0.75">Static verifier only</text>
+<rect x="216" y="27" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="230" y="36" fontSize="11" fill="currentColor" fillOpacity="0.75">With behaviour monitor + filtering</text>
+<line x1="44" y1="218.0" x2="624" y2="218.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="222.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">0%</text>
+<line x1="44" y1="174.5" x2="624" y2="174.5" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="178.5" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">20%</text>
+<line x1="44" y1="131.0" x2="624" y2="131.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="135.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">40%</text>
+<line x1="44" y1="87.5" x2="624" y2="87.5" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="91.5" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">60%</text>
+<line x1="44" y1="44.0" x2="624" y2="44.0" stroke="currentColor" strokeOpacity="0.12" strokeWidth="1"/>
+<text x="38" y="48.0" fontSize="10" textAnchor="end" fill="currentColor" fillOpacity="0.6">80%</text>
+<rect x="152.0" y="154.9" width="36.0" height="63.1" rx="4" fill="#2a78d6"/>
+<rect x="152.0" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="170.0" y="149.9" fontSize="11" textAnchor="middle" fill="currentColor">29%</text>
+<rect x="190.0" y="215.8" width="36.0" height="2.2" rx="4" fill="#eb6834"/>
+<rect x="190.0" y="214.0" width="36.0" height="4" fill="#eb6834"/>
+<text x="208.0" y="210.8" fontSize="11" textAnchor="middle" fill="currentColor">1%</text>
+<text x="189.0" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">Exploitative (hacked) solutions</text>
+<rect x="442.0" y="131.0" width="36.0" height="87.0" rx="4" fill="#2a78d6"/>
+<rect x="442.0" y="214.0" width="36.0" height="4" fill="#2a78d6"/>
+<text x="460.0" y="126.0" fontSize="11" textAnchor="middle" fill="currentColor">40%</text>
+<rect x="480.0" y="85.3" width="36.0" height="132.7" rx="4" fill="#eb6834"/>
+<rect x="480.0" y="214.0" width="36.0" height="4" fill="#eb6834"/>
+<text x="498.0" y="80.3" fontSize="11" textAnchor="middle" fill="currentColor">61%</text>
+<text x="479.0" y="236" fontSize="11" textAnchor="middle" fill="currentColor" fillOpacity="0.8">Clean task success</text>
+<line x1="44" y1="218" x2="624" y2="218" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1"/>
+<text x="44" y="292" fontSize="10" fill="currentColor" fillOpacity="0.55">Source: The Verification Horizon (arXiv 2606.26300), software-engineering tasks.</text>
+</svg>
+</div>
+
+The second source is Veracode's longitudinal security study, now covering more than 150 models. Across all models and tasks, only about 55% of generation tasks produce secure code. That number was 55% in 2025 and it was still 55% in March 2026, a period during which coding benchmarks like HumanEval kept climbing. Their earlier report put AI-generated code at 2.74x the vulnerability rate of human code, with cross-site scripting missed in 86% of relevant samples. GitClear's repository data shows the quality side of the same story: copy/paste rates up from 8.3% (2021) to 12.3% (2024), refactoring down from ~24% to under 10%.
+
+| Signal | 2025 | 2026 | Direction |
+| --- | --- | --- | --- |
+| Coding benchmark scores (HumanEval, SWE-bench Verified) | rising | rising | up |
+| Secure-code output rate (Veracode) | ~55% | ~55% | flat |
+| AI-code vulnerability rate vs. human (Veracode) | 2.74x | — | high |
+| Refactoring share of commits (GitClear) | under 10% | — | down |
+
+There is also a provocative position paper, *The End of Code Review: Coding Agents Supersede Human Inspection* (Monperrus, 2606.13175), arguing that agents can now replace human review in some workflows. I read it as a useful overstatement. Its own limitations section admits the evidence is benchmark-based, and that review does things other than catching bugs, like spreading knowledge across a team.
+
+**My read.** This is the trend I have the most direct experience with. Kalee Harness exists because a one-pass model review is a bad review. It runs a scan pass and then a separate verify pass, and every finding is labelled `CONFIRMED` or `PLAUSIBLE`, because a reviewer that cannot say how sure it is has not finished its job. That design was intuition when I built it. The Verification Horizon paper is the same idea with numbers attached. And in a bank, where a missed injection flaw is a regulatory event and not just a bug, the flat 55% line is the chart I would show a manager who thinks review is now optional.
+
+**What I am doing.**
+
+- Treating verifiers as first-class code. Tests, linters, SAST, and dependency scanners are now tools the agent *calls*, not a gate it hits afterwards.
+- Adding a behaviour monitor to any agent that edits code: a second model whose only question is "did the first one do something it should not have?"
+- Keeping the `CONFIRMED` / `PLAUSIBLE` split in review output, and treating prompt changes as falsifiable experiments against a fixed set of known-bad diffs.
+
+# 3. Leaderboards are being replaced by trajectory evaluation
+
+A position paper from June (*Coding Benchmarks Are Misaligned with Agentic Software Engineering*, 2606.17799) says out loud what most of us noticed in practice: SWE-bench-style benchmarks score a single, isolated fix, while real agentic work is iterative, tool-heavy, and collaborative. High scores do not reliably predict effectiveness in a real repository.
+
+The constructive response is a wave of new evaluation work. AgentAtlas (2605.20530) proposes judging *trajectories*, not outcomes, with a six-state control taxonomy: Act, Ask, Refuse, Stop, Confirm, Recover. Two of their findings matter to practitioners. First, no single model dominates all axes; the strongest model on control decisions was the weakest on tool-context use. Second, when the taxonomy is removed from the prompt, trajectory accuracy drops 14–40 points and every model family compresses to 0.54–0.62. Explicit structure in the prompt inflates apparent capability. Alongside it, Dialogue SWE-Bench and SWE-Together test agents in multi-turn sessions with a user, SWE-EVO tests long-horizon software evolution, and SWE-ContextBench (1,476 tasks, 51 repositories, 9 languages) tests whether an agent can *reuse* experience from earlier tasks.
+
+| What an outcome score tells you | What a trajectory tells you |
+| --- | --- |
+| The tests passed | Whether it asked when the spec was ambiguous |
+| — | Whether it stopped when the task was done, or kept going |
+| — | Whether it took an unsafe path to a correct answer |
+| — | How many tokens and tool calls it burned |
+| — | Whether it recovered from a failed tool call or looped |
+
+**My read.** I picked models for Kalee Harness with a conformance suite, not a leaderboard, because the leaderboard told me nothing about whether a local 8B model would stop calling tools once it had the answer. With local models the Ask/Stop/Recover behaviours were the whole ballgame. AgentAtlas gives that a vocabulary. The practical takeaway is that the model ranking you should care about is the one on *your* tasks, in *your* harness.
+
+**What I am doing.**
+
+- Keeping a 20–30 task eval set pulled from real tickets in my own repos, with expected outcomes, and re-running it whenever a model or prompt changes.
+- Logging full trajectories (tool calls, tokens, cost), not just pass/fail. Kalee prints token and cost accounting per run for this reason.
+- Scoring Ask/Stop/Recover explicitly when comparing models, especially open-weight ones.
+
+# 4. Context engineering and memory are the design surface
+
+The most crowded corner of the summer's arXiv was agent memory: *Memory as Action* (autonomous context curation for long-horizon tasks), *InfiAgent* (bounded reasoning context with persistent state externalised to files), *CoMem* (context management with a decoupled long-context model), *SAM* (state-adaptive memory), a proactive memory agent, and at least one full survey. The shared premise is that a bigger context window does not solve long-horizon work; deliberately curating what is in the window does.
+
+The theme is not new to anyone who has built RAG. It *is* new that the same discipline is now being applied to the agent's own working state, and that file-centric state (write it down, read it back) keeps beating clever in-context tricks.
+
+**My read.** Caridata is context engineering for documents: hybrid dense + SPLADE retrieval with RRF fusion exists because dense-only retrieval put the wrong passages in the window. An agent's memory has the identical failure mode, and the identical fix: retrieve selectively, keep the window bounded, write durable state to disk. The other lesson is in the papers' architecture choices. InfiAgent's file-centric state is exactly what a `CLAUDE.md`, a `memory/` directory, or a session log is. When I added sessions to Kalee, they came *after* the harness worked stateless, and I think that ordering was right: make the loop correct, then decide what deserves to persist.
+
+**What I am doing.**
+
+- Writing repository memory files (architecture notes, conventions, known traps) as deliberately as I write tests, and reviewing them in PRs.
+- Treating the context window as a budget with a bill attached, the same way I estimated GPU memory in [the foundation-model GPU post](/blog/calculate_and_estimate_gpu_usage). Every sub-agent is a fresh window; that is the cost of parallelism.
+- Trying experience reuse deliberately: give the agent the trajectory of the last similar task and measure whether it helps or just adds noise.
+
+# 5. The attack surface moved into the tool result
+
+This is the trend I would put at the top if I were ranking by consequence.
+
+The security literature on MCP consolidated this year into a taxonomy: tool poisoning (instructions hidden in tool descriptions), rug pulls (a server silently redefining a tool after approval), tool shadowing, cross-server attacks, confused-deputy OAuth flows, and the "lethal trifecta" of private data access, untrusted content, and an exfiltration channel in one agent. A 2026 study of seven MCP clients found tool poisoning the most prevalent client-side vulnerability, mostly because clients do not statically validate tool descriptions or show users the parameter values being sent.
+
+Then in April 2026 a Johns Hopkins team demonstrated the real-world version. They put instructions in GitHub pull request *titles*. Claude Code, Gemini CLI, and GitHub Copilot read the PR data as part of an ordinary task, followed the injected instructions, and exfiltrated GitHub Actions secrets. The injection did not come from a user. It came from a tool result.
+
+A separate study (*Are AI-assisted Development Tools Immune to Prompt Injection?*, 2603.21642) tested seven tools against four attacks via poisoned tool metadata:
+
+| Tool | Safe | Partial | Unsafe |
+| --- | --- | --- | --- |
+| Claude Desktop | 3/4 | 1/4 | 0/4 |
+| Claude Code | 3/4 | 1/4 | 0/4 |
+| Continue | 3/4 | 1/4 | 0/4 |
+| Cline | 2/4 | 0/4 | 1/4 |
+| Gemini CLI | 2/4 | 2/4 | 0/4 |
+| Langflow | 1/4 | 3/4 | 0/4 |
+| Cursor | 0/4 | 0/4 | 4/4 |
+
+The attacks were reading `~/.ssh`, logging every tool invocation, generating phishing links, and executing a remote script. None of them required the user to type anything unusual.
+
+**My read.** I spent years on Android security, and this is the same lesson dressed differently. In [OWASP for Android developers](/blog/owasp-things_android_developer_should_know) and [countering reverse engineering](/blog/9-strategies-to-counter-android-re) the rule was: an intent, a deep link, a WebView message is hostile input until proven otherwise. For an agent, *every tool result is hostile input*. The PR title, the web page, the Notion doc, the JSON from an MCP server. Anthropic's own trends report says agents help defenders and attackers scale equally, and I believe it. In a banking environment an agent with a production database tool and a browser tool is the lethal trifecta by construction. Kalee Harness has no edit tool and only read-only tools on purpose. That was a design simplification when I made it; today I would call it the security model.
+
+**What I am doing.**
+
+- Least privilege per agent, enforced by the harness, not the prompt. Review agents get read-only tools. Editing agents get no network.
+- Treating MCP servers like dependencies: pinned, reviewed, and with tool descriptions diffed on update to catch rug pulls.
+- No auto-approve anywhere near CI credentials. If an agent runs in a pipeline, it runs in a container with scoped tokens and an audit log.
+- Building the "did this task's inputs contain instructions?" check into the behaviour monitor from trend 2.
+
+# 6. Small models on the edge are now a real workload
+
+The last trend is quieter and, for a mobile engineer, maybe the most exciting. As of mid-2026 language models are a realistic edge workload. Google's Gemma "E" variants use per-layer embeddings to cut runtime memory well below what the parameter count implies, and are the reference targets for the LiteRT-LM on-device stack. Alibaba shipped a Qwen small series from 0.8B to 9B parameters, explicitly spanning IoT devices up to local servers with one family. Microsoft's Phi line keeps showing that data quality substitutes for size. Quantised to 4 bits, a capable ~4B model is about a gigabyte and runs on a phone, a Raspberry Pi 5, or a few-watt accelerator. Vendor reports claim a large share of enterprise deployments now run local SLMs for sensitive data; I would treat the exact percentages with caution, but the direction matches what I see.
+
+**My read.** I wrote about this from the interaction side in [Language User Interface](/blog/language-user-interface) and from the plumbing side in [cosine similarity with SQLite + EmbeddingGemma](/blog/cosine-similarity-from-scratch). What has changed is that the models are now good enough for real product features, not demos. For a banking app, on-device is not a nice-to-have. It is the only way some features are allowed to exist: transaction categorisation, intent detection, or document Q&A over statements, without the data leaving the phone. Kotlin Multiplatform makes the shared inference layer more attractive than it used to be, which is a large part of [why I think KMP matters](/blog/why_kmp_is_game_changer).
+
+**What I am doing.**
+
+- Prototyping one on-device feature end to end: a small classifier or a local RAG over a user's own documents, using EmbeddingGemma plus a ~1B–4B generator.
+- Benchmarking on real mid-range devices, not the flagship in my pocket, and doing the memory arithmetic first.
+- Being honest about the boundary: on-device for private, latency-sensitive, bounded tasks; hosted for everything else.
+
+# Case studies: where this is already working
+
+| Trend | Case | What it demonstrates |
+| --- | --- | --- |
+| 1 Orchestration | Anthropic's multi-agent research system (orchestrator + parallel specialists on a shared filesystem) | Decompose, parallelise, integrate in one context |
+| 1 Orchestration | The "split-screen" workflow reported in the Pragmatic Engineer survey: agent in a terminal, human reviewing in the IDE | Delegation with a human still in the loop |
+| 2 Verification | Verification Horizon's behaviour monitor: 29% to 1% exploitative solutions | A second model as an auditor beats a stricter reward |
+| 2 Verification | Kalee Harness: scan-then-verify, `CONFIRMED` vs `PLAUSIBLE` | Even a personal tool benefits from separating generation from verification |
+| 3 Evaluation | AgentAtlas across 8 models: ranking inversions on every axis | Pick models on your tasks, not a leaderboard |
+| 4 Context | Caridata: hybrid retrieval + RRF over Qdrant | Curating the window beats enlarging it |
+| 5 Security | JHU PR-title injection leaking Actions secrets (negative case) | Tool results are untrusted input |
+| 5 Security | Claude Desktop / Claude Code 3/4 safe in the seven-tool study | Parameter visibility and approval prompts work |
+| 6 Edge | Gemma "E" on LiteRT-LM; ~4B at 4-bit in ~1 GB | On-device inference is a product decision now |
+
+# Challenges, and what I plan to do about them
+
+| Challenge | Why it bites | Mitigation |
+| --- | --- | --- |
+| Review capacity does not scale with agent output | A 16-hour agent run produces more diff than I can read | Delegate by verifiability; require tests with every agent PR; verify with a second agent before I look |
+| Verifiers get gamed | Every verifier is a proxy; strong models find the gap | Layer monitors; rotate and re-check verifiers; keep a set of known-bad cases |
+| Enterprise procurement lag | The Pragmatic Engineer data shows big companies default to whatever is bundled | Run the eval set on the tools I *can* use; make the case with numbers from my own repos |
+| Prompt injection has no clean fix | Defences are improving, none are complete | Assume compromise: least privilege, sandbox, scoped tokens, audit log |
+| Local models underperform on Ask/Stop behaviours | Open-weight models loop or over-act more | Conformance suite before adoption; keep them on bounded, read-only tasks |
+| Regulated environment | Banking cannot ship what it cannot explain | Trajectory logs and per-run cost accounting are the audit trail |
+| Skill drift | If agents write all the code, does anyone still understand it? | Keep humans on architecture and review; rotate who reads the agent's trajectories |
+
+# The 90-day list
+
+1. Build a 25-task eval from real tickets and run it against every tool I use. Score outcome *and* Ask/Stop/Recover.
+2. Add a behaviour-monitor pass to Kalee, and re-measure the false-positive rate on the known-bad set.
+3. Move the team's tests, SAST, and dependency scanner behind tools the agent can call, so verification happens inside the loop.
+4. Write and review repository memory files with the same care as tests.
+5. Ship one on-device feature prototype on a mid-range Android device and publish the memory and latency numbers.
+6. Write down the agent permission model for anything that touches production, and diff MCP tool descriptions on every update.
+
+If any of these lands somewhere interesting it will be its own post. The one I most expect to write is the on-device one.
+
+# Sources
+
+Surveys and reports
+
+- JetBrains, [AI Coding Agents: Adoption Trends](https://blog.jetbrains.com/research/2026/08/ai-coding-agent-adoption-2026/) (Developer Ecosystem Survey 2026, n = 15,000+)
+- The Pragmatic Engineer, [AI Tooling for Software Engineers in 2026](https://newsletter.pragmaticengineer.com/p/ai-tooling-2026) (n=906)
+- Anthropic, [2026 Agentic Coding Trends Report](https://resources.anthropic.com/2026-agentic-coding-trends-report); summary via [Tessl](https://tessl.io/blog/8-trends-shaping-software-engineering-in-2026-according-to-anthropics-agentic-coding-report)
+- METR, [Time Horizon 1.1](https://metr.org/blog/2026-1-29-time-horizon-1-1/) and [Task-Completion Time Horizons](https://metr.org/time-horizons/)
+- Veracode, [Spring 2026 GenAI Code Security Update](https://www.veracode.com/blog/spring-2026-genai-code-security/) and the [2025 GenAI Code Security Report](https://www.veracode.com/blog/genai-code-security-report/)
+- ICML 2026 [accepted-paper statistics](https://csconfstats.xoveexu.com/conferences/icml/2026/) (6,352 / 23,918, 26.6%)
+
+Papers
+
+- [The Verification Horizon: Coding Agent Reward Limits](https://www.emergentmind.com/papers/2606.26300) (arXiv 2606.26300)
+- Gorinova et al., [Position: Coding Benchmarks Are Misaligned with Agentic Software Engineering](https://arxiv.org/pdf/2606.17799)
+- [AgentAtlas: Beyond Outcome Leaderboards for LLM Agents](https://arxiv.org/html/2605.20530v1)
+- Monperrus, [The End of Code Review: Coding Agents Supersede Human Inspection](https://arxiv.org/pdf/2606.13175)
+- [Dialogue SWE-Bench](https://arxiv.org/pdf/2606.13995), [SWE-Together](https://arxiv.org/pdf/2606.29957), [SWE-EVO](https://arxiv.org/pdf/2512.18470), [SWE-ContextBench](https://arxiv.org/html/2602.08316v1)
+- [Memory as Action](https://arxiv.org/pdf/2510.12635), [Learning Agent-Compatible Context Management](https://arxiv.org/pdf/2605.30785), [CoMem](https://arxiv.org/pdf/2605.30842), [SAM](https://arxiv.org/pdf/2605.24468), [Proactive Memory Agent](https://arxiv.org/pdf/2607.08716)
+- [Are AI-assisted Development Tools Immune to Prompt Injection?](https://arxiv.org/html/2603.21642v1) (arXiv 2603.21642)
+- [MCP Threat Modeling and Tool Poisoning](https://arxiv.org/abs/2603.22489), [VIPER-MCP](https://arxiv.org/pdf/2605.21392), [MCP Pitfall Lab](https://arxiv.org/pdf/2604.21477), [SoK: Security and Safety in the MCP Ecosystem](https://arxiv.org/pdf/2512.08290)
+- Sysdig, [Prompt Injection Attacks in 2026](https://www.sysdig.com/learn-cloud-native/prompt-injection) (includes the Johns Hopkins PR-title incident)
+- Edge models: [From TinyML to Tiny Language Models](https://derekmolloy.ie/from-tinyml-to-tiny-language-models-the-state-of-edge-ai-in-2026/)
